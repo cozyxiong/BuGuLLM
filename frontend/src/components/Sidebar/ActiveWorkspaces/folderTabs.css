@@ -1,0 +1,400 @@
+/**
+ * 竖向 Folder Tabs — 使用原站两个角标 SVG 的路径
+ * image-b4d61677 = 右角 → 竖版下角
+ * image-7f68e23f = 左角 → 竖版上角
+ *
+ * 横版 CSS 映射：
+ *   corner { right:-2rem; height:2.5rem; max-width:2.25rem }
+ *   corner-left { left:-2rem; bottom:0 }
+ * 竖版：
+ *   下角 { top:100%; width:100%; height:2.25rem }
+ *   上角 { bottom:100%; width:100%; height:2.25rem }
+ */
+
+.ft-shell {
+  --ft-tab-w: 52px;
+  --ft-r: 16px;
+  --ft-tab-min-h: 92px;
+  --ft-corner-h: 2.25rem;
+  --ft-idle: #f4f6f8;
+  --ft-idle-fg: rgba(0, 0, 0, 0.45);
+  --ft-active: var(--theme-bg-secondary, #ffffff);
+  --ft-active-fg: var(--theme-text-primary, #111);
+  --ft-chip: color-mix(in srgb, #000 6%, var(--ft-idle));
+
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  width: 100%;
+}
+
+[data-theme="light"] .ft-shell {
+  --ft-idle: #edf2fa;
+  --ft-idle-fg: rgba(15, 23, 42, 0.45);
+  --ft-active: var(--theme-bg-secondary, #ffffff);
+  --ft-active-fg: var(--theme-text-primary, #111);
+  --ft-chip: rgba(15, 23, 42, 0.06);
+}
+
+[data-theme="dark"] .ft-shell {
+  --ft-idle: #141416;
+  --ft-idle-fg: rgba(255, 255, 255, 0.4);
+  --ft-active: var(--theme-bg-secondary, #1b1b1e);
+  --ft-active-fg: var(--theme-text-primary, #f3f3f3);
+  --ft-chip: rgba(255, 255, 255, 0.08);
+}
+
+.ft-row {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  align-items: stretch;
+  gap: 0;
+  border-radius: var(--ft-r);
+  overflow: visible;
+}
+
+.ft-rail-col {
+  display: flex;
+  flex-direction: column;
+  width: var(--ft-tab-w);
+  min-width: var(--ft-tab-w);
+  flex-shrink: 0;
+  min-height: 0;
+  background: var(--ft-idle);
+  border-radius: var(--ft-r) 0 0 var(--ft-r);
+  z-index: 2;
+  overflow: visible;
+}
+
+.ft-shell.is-rail-only .ft-rail-col {
+  border-radius: var(--ft-r);
+  height: 100%;
+}
+
+/* 轨顶固定区：与 .ft-rail-footer 对称 */
+.ft-rail-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 8px 0 6px;
+  min-height: 44px;
+  z-index: 3;
+  background: var(--ft-idle);
+}
+
+.ft-rail-header-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  cursor: pointer;
+  transition: background 160ms ease, color 160ms ease;
+}
+.ft-rail-header-btn:hover {
+  background: var(--ft-chip);
+}
+
+.ft-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  flex: 1;
+  min-height: 0;
+  overflow-x: visible;
+  overflow-y: auto;
+  /* 顶/底由 header、footer 占位，列表本身不再预留 padding */
+  padding: 0;
+  scrollbar-width: none;
+}
+.ft-rail::-webkit-scrollbar {
+  display: none;
+}
+
+.ft-tab {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: var(--ft-tab-min-h);
+  flex: 0 0 auto;
+  padding: 16px 6px;
+  border: none;
+  margin: 0;
+  background-color: var(--ft-idle);
+  color: var(--ft-idle-fg);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-decoration: none;
+  cursor: grab;
+  z-index: 1;
+  border-radius: 1em 0 0 1em;
+  overflow: visible;
+  transition: color 100ms ease, background-color 100ms ease, opacity 100ms ease;
+}
+
+.ft-tab:hover:not(.is-active) {
+  color: var(--ft-active-fg);
+}
+
+.ft-tab:active {
+  cursor: grabbing;
+}
+
+/* 拖拽换序：仅在竖条内换位，移出屏幕仍按 Y 映射 */
+body.ft-tab-dragging {
+  cursor: grabbing !important;
+  user-select: none !important;
+}
+body.ft-tab-dragging * {
+  cursor: grabbing !important;
+}
+
+.ft-tab.is-dragging {
+  opacity: 0.55;
+  z-index: 6;
+}
+.ft-tab.is-drag-over:not(.is-dragging) {
+  outline: 2px solid var(--theme-button-primary, #3b82f6);
+  outline-offset: -2px;
+}
+
+.ft-tab.is-active {
+  color: var(--ft-active-fg);
+  background-color: var(--ft-active);
+  font-weight: 600;
+  /* 高于邻签，角标才能盖在灰签上形成贴合 */
+  z-index: 4;
+  box-shadow: 1px 0 0 0 var(--ft-active);
+}
+
+.ft-shell.is-rail-only .ft-tab.is-active {
+  border-radius: 1em;
+  box-shadow: none;
+}
+
+/**
+ * 角标贴合：原站 right:-2rem + max-width:2.25rem ≈ 叠进 tab 0.25rem
+ * 竖版上下各叠进 8px，避免与 active 之间露缝
+ */
+.ft-tab-corner {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: var(--ft-corner-h);
+  z-index: 5;
+  pointer-events: none;
+  color: var(--ft-active);
+  opacity: 0;
+  transition: opacity 100ms ease;
+  line-height: 0;
+  overflow: visible;
+}
+
+.ft-tab.is-active .ft-tab-corner {
+  opacity: 1;
+}
+
+/* 下角：叠进 active 底边，再向下伸出盖住下方灰签 */
+.ft-tab-corner.is-bottom {
+  top: calc(100% - 8px);
+  height: calc(var(--ft-corner-h) + 8px);
+}
+
+/* 上角：叠进 active 顶边，再向上伸出盖住上方灰签 */
+.ft-tab-corner.is-top {
+  bottom: calc(100% - 8px);
+  height: calc(var(--ft-corner-h) + 8px);
+}
+
+.ft-tab-corner svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.ft-shell.is-rail-only .ft-tab-corner {
+  display: none !important;
+}
+
+.ft-tab-label {
+  max-height: 148px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+  position: relative;
+  z-index: 2;
+}
+
+.ft-panel {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  background: var(--ft-active);
+  /* 左上/左下贴 Tab 列直角，仅右侧圆角 */
+  border-radius: 0 var(--ft-r) var(--ft-r) 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 1;
+  margin: 0;
+  box-shadow:
+    0 1px 2px color-mix(in srgb, #000 4%, transparent),
+    0 10px 28px color-mix(in srgb, #000 5%, transparent);
+}
+
+/* hide 侧栏内容区：不卸载 React 树，保留展开与选中 */
+.ft-panel.is-hidden {
+  display: none;
+}
+
+.ft-panel.is-first-active {
+  border-top-left-radius: 0;
+}
+
+.ft-panel-logo {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 10px 14px 6px 14px;
+  flex-shrink: 0;
+}
+
+.ft-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 12px 10px;
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--theme-sidebar-border, #000) 10%, transparent);
+  flex-shrink: 0;
+}
+
+.ft-panel-title {
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--ft-active-fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.ft-panel-actions {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.ft-icon-btn {
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--theme-text-secondary);
+  transition: background 150ms ease, color 150ms ease;
+}
+.ft-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--theme-text-primary);
+}
+/* 设置页打开：中性高亮，不用品牌蓝 */
+.ft-icon-btn.is-active {
+  color: var(--theme-text-primary);
+  background: rgba(255, 255, 255, 0.08);
+}
+.ft-icon-btn.is-active:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--theme-text-primary);
+}
+[data-theme="light"] .ft-icon-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+[data-theme="light"] .ft-icon-btn.is-active {
+  background: rgba(0, 0, 0, 0.06);
+}
+[data-theme="light"] .ft-icon-btn.is-active:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.ft-panel-search {
+  padding: 8px 10px 6px;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.ft-panel-search input {
+  width: 100%;
+  border: none;
+  outline: none;
+  border-radius: 10px;
+  padding: 7px 10px 7px 30px;
+  font-size: 12px;
+  background: var(--theme-settings-input-bg, rgba(0, 0, 0, 0.04));
+  color: var(--theme-text-primary);
+}
+
+.ft-panel-search .ft-search-icon {
+  position: absolute;
+  left: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--theme-text-secondary);
+  pointer-events: none;
+}
+
+.ft-panel-body {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 0 0 4px;
+}
+
+.ft-rail-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 0 12px;
+  flex-shrink: 0;
+  z-index: 3;
+  background: var(--ft-idle);
+}
+
+.ft-rail-footer a,
+.ft-rail-footer button {
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background: var(--ft-chip);
+  color: var(--theme-text-secondary);
+  text-decoration: none;
+  transition: background 160ms ease, color 160ms ease, transform 160ms ease;
+}
+.ft-rail-footer a:hover,
+.ft-rail-footer button:hover {
+  background: var(--theme-button-primary, #2563eb);
+  color: #fff;
+  transform: translateY(-1px);
+}

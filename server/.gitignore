@@ -1,0 +1,40 @@
+# 本地密钥与 UI 持久化配置（含模型 API Key），勿提交
+.env
+.env.*
+!.env.example
+.env.production
+.env.development
+.env.test
+storage/assets/*
+!storage/assets/anything-llm.png
+!storage/assets/anything-llm-invert.png
+storage/documents/*
+storage/comkey/*
+storage/tmp/*
+storage/vector-cache/*.json
+storage/exports
+storage/imports
+storage/anythingllm-fs/*
+storage/generated-files/*
+storage/plugins/agent-skills/*
+storage/plugins/agent-flows/*
+storage/plugins/office-extensions/*
+storage/plugins/anythingllm_mcp_servers.json
+!storage/documents/DOCUMENTS.md
+storage/push-notifications/*
+storage/direct-uploads
+storage/vault/
+logs/server.log
+*.db
+*.db-journal
+storage/lancedb
+public/
+__tests__/**/models
+
+# For legacy copies of repo
+documents
+vector-cache
+yarn-error.log
+
+# Local SSL Certs for HTTPS
+sslcert

@@ -1,0 +1,194 @@
+/**
+ * 系统设置视觉语言
+ * 左栏品牌保持独立；右侧按「安静、留白、一条主色」编排。
+ */
+
+.settings-nav-item {
+  position: relative;
+  border-radius: 0;
+}
+
+.settings-nav-item:not(.is-active):hover {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.07) 0%,
+    rgba(255, 255, 255, 0.03) 52%,
+    transparent 100%
+  );
+}
+[data-theme="light"] .settings-nav-item:not(.is-active):hover {
+  background: linear-gradient(
+    90deg,
+    rgba(15, 23, 42, 0.055) 0%,
+    rgba(15, 23, 42, 0.02) 52%,
+    transparent 100%
+  );
+}
+
+.settings-nav-item.is-active {
+  color: var(--theme-text-primary) !important;
+  border-radius: 0 !important;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.14) 0%,
+    rgba(255, 255, 255, 0.06) 52%,
+    transparent 100%
+  ) !important;
+}
+.settings-nav-item.is-active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  border-radius: 0;
+  background: rgba(255, 255, 255, 0.8);
+}
+[data-theme="light"] .settings-nav-item.is-active {
+  background: linear-gradient(
+    90deg,
+    rgba(15, 23, 42, 0.1) 0%,
+    rgba(15, 23, 42, 0.04) 52%,
+    transparent 100%
+  ) !important;
+}
+[data-theme="light"] .settings-nav-item.is-active::before {
+  background: var(--theme-text-primary);
+}
+
+/* 旧设置页标题条：去掉 AnythingLLM 粗白线 / 过重字重 */
+.settings-app .text-lg.leading-6.font-bold.text-white,
+.settings-app .text-lg.leading-6.font-bold.text-theme-text-primary,
+.settings-app p.text-lg.font-bold {
+  font-size: 1.375rem !important;
+  line-height: 1.25 !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.025em !important;
+  color: var(--theme-text-primary) !important;
+}
+
+.settings-app .text-white.text-opacity-60,
+.settings-app .text-xs.leading-\[18px\].font-base.text-white {
+  color: var(--theme-text-secondary) !important;
+  font-size: 0.8125rem !important;
+  line-height: 1.55 !important;
+  opacity: 1 !important;
+}
+
+.settings-app .border-white.border-b-2,
+.settings-app .border-white\/10.border-b-2,
+.settings-app .border-white.light\:border-theme-sidebar-border.border-b-2 {
+  border-color: var(--theme-modal-border) !important;
+  border-bottom-width: 1px !important;
+  padding-bottom: 1.25rem !important;
+}
+
+.settings-app .py-16 {
+  padding-top: 1.75rem !important;
+  padding-bottom: 2.5rem !important;
+}
+
+.settings-app .md\:pr-\[50px\],
+.settings-app .md\:pr-\[86px\] {
+  padding-right: 2rem !important;
+}
+
+.settings-app .md\:pl-6 {
+  padding-left: 2rem !important;
+}
+
+.settings-save-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 1.75rem;
+  padding: 0 0.625rem;
+  border: none;
+  border-radius: 0.375rem;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0;
+  white-space: nowrap;
+  color: #18181b;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.settings-save-btn:hover {
+  background: rgba(255, 255, 255, 0.9);
+}
+.settings-save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+[data-theme="light"] .settings-save-btn {
+  background: var(--theme-text-primary);
+  color: #fff;
+}
+
+/* 下拉框：与工作区设置一致 */
+.settings-app select {
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  height: 2.75rem !important;
+  padding: 0 2.5rem 0 0.875rem !important;
+  border-radius: 0.75rem !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background-color: rgba(0, 0, 0, 0.28) !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M2.5 4.5L6 8L9.5 4.5' stroke='rgba(255,255,255,0.45)' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 0.875rem center !important;
+  background-size: 12px 12px !important;
+  color: rgba(255, 255, 255, 0.88) !important;
+  font-size: 0.8125rem !important;
+  font-weight: 500 !important;
+  letter-spacing: -0.01em !important;
+  line-height: 1.25 !important;
+  cursor: pointer !important;
+  outline: none !important;
+  box-shadow: none !important;
+  transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease !important;
+}
+.settings-app select:hover {
+  border-color: rgba(255, 255, 255, 0.14) !important;
+  background-color: rgba(0, 0, 0, 0.34) !important;
+}
+.settings-app select:focus,
+.settings-app select:focus-visible,
+.settings-app select:active {
+  border-color: rgba(255, 255, 255, 0.18) !important;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.05) !important;
+  outline: none !important;
+  background-color: rgba(0, 0, 0, 0.34) !important;
+}
+.settings-app select:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+}
+.settings-app select option,
+.settings-app select optgroup {
+  background: #1c1c1f;
+  color: rgba(255, 255, 255, 0.9);
+}
+[data-theme="light"] .settings-app select {
+  border-color: var(--theme-modal-border) !important;
+  background-color: var(--theme-settings-input-bg) !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M2.5 4.5L6 8L9.5 4.5' stroke='rgba(0,0,0,0.4)' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") !important;
+  color: var(--theme-text-primary) !important;
+}
+[data-theme="light"] .settings-app select:hover {
+  border-color: color-mix(in srgb, var(--theme-text-primary) 22%, transparent) !important;
+}
+[data-theme="light"] .settings-app select:focus,
+[data-theme="light"] .settings-app select:focus-visible,
+[data-theme="light"] .settings-app select:active {
+  border-color: color-mix(in srgb, var(--theme-text-primary) 28%, transparent) !important;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06) !important;
+}
+[data-theme="light"] .settings-app select option,
+[data-theme="light"] .settings-app select optgroup {
+  background: #fff;
+  color: var(--theme-text-primary);
+}

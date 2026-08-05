@@ -1,0 +1,87 @@
+import { useEffect, useState, useRef } from "react";
+import { SpeakerHigh, PauseCircle, CircleNotch } from "@phosphor-icons/react";
+import Workspace from "@/models/workspace";
+import showToast from "@/utils/toast";
+import { useTranslation } from "react-i18next";
+
+export default function AsyncTTSMessage({ slug, chatId }) {
+  const playerRef = useRef(null);
+  const [speaking, setSpeaking] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [audioSrc, setAudioSrc] = useState(null);
+  const { t } = useTranslation();
+
+  function speakMessage() {
+    if (speaking) {
+      playerRef?.current?.pause();
+      return;
+    }
+
+    try {
+      if (!audioSrc) {
+        setLoading(true);
+        Workspace.ttsMessage(slug, chatId)
+          .then((audioBlob) => {
+            if (!audioBlob)
+              throw new Error("Failed to load or play TTS message response.");
+            setAudioSrc(audioBlob);
+          })
+          .catch((e) => showToast(e.message, "error", { clear: true }))
+          .finally(() => setLoading(false));
+      } else {
+        playerRef.current.play();
+      }
+    } catch (e) {
+      console.error(e);
+      setLoading(false);
+      setSpeaking(false);
+    }
+  }
+
+  useEffect(() => {
+    function setupPlayer() {
+      if (!playerRef?.current) return;
+      playerRef.current.addEventListener("play", () => {
+        setSpeaking(true);
+      });
+
+      playerRef.current.addEventListener("pause", () => {
+        playerRef.current.currentTime = 0;
+        setSpeaking(false);
+      });
+    }
+    setupPlayer();
+  }, []);
+
+  if (!chatId) return null;
+  return (
+    <button
+      type="button"
+      onClick={speakMessage}
+      data-auto-play-chat-id={chatId}
+      data-tooltip-id="message-to-speech"
+      data-tooltip-content={
+        speaking
+          ? t("pause_tts_speech_message")
+          : t("chat_window.tts_speak_message")
+      }
+      className="border-none bg-transparent p-0.5 inline-flex items-center justify-center cursor-pointer text-zinc-400 light:text-slate-500 hover:text-white light:hover:text-slate-800 transition-colors duration-150 leading-none"
+      aria-label={speaking ? "Pause speech" : "Speak message"}
+    >
+      {speaking ? (
+        <PauseCircle size={15} weight="regular" />
+      ) : loading ? (
+        <CircleNotch size={15} weight="regular" className="animate-spin" />
+      ) : (
+        <SpeakerHigh size={15} weight="regular" />
+      )}
+      <audio
+        ref={playerRef}
+        hidden={true}
+        src={audioSrc}
+        autoPlay={true}
+        controls={false}
+      />
+    </button>
+  );
+}
