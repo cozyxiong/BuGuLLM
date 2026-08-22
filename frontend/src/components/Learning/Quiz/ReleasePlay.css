@@ -1,0 +1,190 @@
+.learn-muyu {
+  width: 260px;
+}
+
+.learn-muyu__stage {
+  position: relative;
+  display: block;
+  width: 260px;
+  height: 210px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  overflow: visible;
+  cursor: pointer;
+}
+
+.learn-muyu__brain {
+  position: absolute;
+  left: 50%;
+  top: 58%;
+  transform: translate(-50%, -50%);
+  width: 148px;
+  height: 120px;
+  border: none;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.28));
+}
+
+.learn-muyu__brain img {
+  width: 148px;
+  height: auto;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.learn-muyu__brain:hover img {
+  filter: brightness(1.06);
+}
+
+.learn-muyu__brain.is-hit img {
+  animation: learn-brain-hit 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.learn-mallet {
+  position: absolute;
+  left: calc(50% + 36px);
+  top: 2px;
+  width: 36px;
+  height: 138px;
+  transform-origin: 50% 90%;
+  transform: rotate(-28deg);
+  pointer-events: none;
+  will-change: transform;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.22));
+  animation: learn-mallet-idle 3.2s ease-in-out infinite;
+}
+
+.learn-mallet.is-striking {
+  animation: none;
+}
+
+.learn-mallet img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: bottom center;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.learn-muyu__spark {
+  position: absolute;
+  left: calc(50% + 18px);
+  top: 62px;
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px;
+  pointer-events: none;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 248, 220, 0.95) 0%,
+    rgba(250, 204, 21, 0.45) 38%,
+    rgba(250, 204, 21, 0) 70%
+  );
+  opacity: 0;
+}
+
+.learn-muyu__spark.is-on {
+  animation: learn-spark 0.38s ease-out both;
+}
+
+.learn-muyu__float {
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+  white-space: nowrap;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #eab308;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.25);
+  animation: learn-muyu-float 1.4s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+}
+
+.light .learn-muyu__float {
+  color: #ca8a04;
+}
+
+.learn-muyu__hint {
+  margin-top: 10px;
+  text-align: center;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--theme-text-secondary);
+}
+
+.learn-muyu__hint em {
+  font-style: normal;
+  color: #d4a017;
+  font-weight: 600;
+}
+
+@keyframes learn-mallet-idle {
+  0%,
+  100% {
+    transform: rotate(-28deg);
+  }
+  50% {
+    transform: rotate(-34deg);
+  }
+}
+
+@keyframes learn-brain-hit {
+  0% {
+    transform: scale(1);
+  }
+  28% {
+    transform: scale(0.93, 0.96);
+  }
+  54% {
+    transform: scale(1.035, 1.02);
+  }
+  76% {
+    transform: scale(0.985, 1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes learn-spark {
+  0% {
+    opacity: 0;
+    transform: scale(0.35);
+  }
+  30% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.7);
+  }
+}
+
+@keyframes learn-muyu-float {
+  0% {
+    opacity: 0;
+    margin-top: 6px;
+  }
+  12% {
+    opacity: 1;
+    margin-top: 0;
+  }
+  62% {
+    opacity: 1;
+    margin-top: -10px;
+  }
+  100% {
+    opacity: 0;
+    margin-top: -18px;
+  }
+}
