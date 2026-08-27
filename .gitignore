@@ -16,6 +16,11 @@ yarn.lock
 # Local Grok/agent helpers — not part of the published tree
 .agents/
 
+# Collector runtime logs
+collector/.boot-err.log
+collector/.boot-out.log
+collector/*.log
+
 # Root-level runtime caches (browser profiles, etc.)
 /storage/
 
