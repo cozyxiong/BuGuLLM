@@ -6,6 +6,7 @@ import {
   startGenerateJob,
   useGenerateKind,
   useRefreshOnGenerateDone,
+  usePlayGenerated,
 } from "../generateJobs";
 import StudioShell from "./StudioShell";
 import { useActiveFilePaths } from "../LearningContext";
@@ -301,6 +302,7 @@ export default function QuizStudio() {
     [refresh]
   );
   useRefreshOnGenerateDone(slug, "quiz", onJobDone);
+  usePlayGenerated(slug, "quiz", onJobDone);
 
   const handleGenerate = () => {
     if (!filePaths.length) {

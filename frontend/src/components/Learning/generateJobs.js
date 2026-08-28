@@ -1,22 +1,31 @@
 import { useEffect, useState } from "react";
 import Generate from "@/models/generate";
 import paths from "@/utils/paths";
+import {
+  playGenerateDoneSfx,
+  playGenerateErrorSfx,
+  unlockGenerateNoticeSfx,
+} from "./generateNoticeSfx";
+import { savePlayerOpen } from "./Studio/playerPref";
 
 const KIND_META = {
   cards: {
     label: "卡片",
     section: "cards",
+    playerKind: "flashcard",
     store: (slug) => `bagullm.learn.session.${slug}.flashcard`,
   },
   quiz: {
     label: "测试",
     section: "quiz",
+    playerKind: "quiz",
     store: (slug) => `bagullm.learn.session.${slug}.quiz`,
   },
   mindmap: {
-    label: "导图",
+    label: "目录",
     section: "mindmap",
-    store: null,
+    playerKind: "mindmap",
+    store: (slug) => `bagullm.learn.session.${slug}.mindmap`,
   },
 };
 
@@ -55,6 +64,44 @@ export function dismissGenerateJob(id) {
   emit();
 }
 
+const playListeners = new Set();
+
+export function subscribePlayGenerated(fn) {
+  playListeners.add(fn);
+  return () => playListeners.delete(fn);
+}
+
+function persistGeneratedSession(job) {
+  const meta = KIND_META[job.kind];
+  if (!meta) return;
+  savePlayerOpen(meta.playerKind, job.slug, true);
+  if (job.itemId && meta.store) {
+    try {
+      sessionStorage.setItem(meta.store(job.slug), String(job.itemId));
+    } catch {
+      /* ignore */
+    }
+  }
+}
+
+/** 点击成功弹窗：打开刚生成的导图/卡片/测试，而不是生成表单 */
+export function requestPlayGenerated(job) {
+  if (!job || job.status !== "done") return;
+  persistGeneratedSession(job);
+  const payload = {
+    slug: job.slug,
+    kind: job.kind,
+    itemId: job.itemId || null,
+  };
+  playListeners.forEach((fn) => {
+    try {
+      fn(payload);
+    } catch {
+      /* ignore */
+    }
+  });
+}
+
 export function startGenerateJob({
   slug,
   kind,
@@ -70,6 +117,7 @@ export function startGenerateJob({
 
   const id = `${kind}-${Date.now()}`;
   const href = paths.workspace.learning(slug, meta.section);
+  unlockGenerateNoticeSfx();
   jobs = [
     ...jobs,
     {
@@ -107,20 +155,13 @@ export function startGenerateJob({
         const nodes =
           result.mindmap?.nodes || result.item?.content?.nodes || [];
         if (!result.error && !nodes.length) {
-          throw new Error("导图已返回但没有节点，请重试一次。");
+          throw new Error("目录已返回但没有节点，请重试一次。");
         }
       }
       if (result.error) throw new Error(result.error);
 
       const itemId =
         result.items?.[0]?.id || result.item?.id || null;
-      if (itemId && meta.store) {
-        try {
-          sessionStorage.setItem(meta.store(slug), String(itemId));
-        } catch {
-          /* ignore */
-        }
-      }
 
       const got = result.count ?? (result.item ? 1 : 0);
       jobs = jobs.map((j) =>
@@ -136,6 +177,13 @@ export function startGenerateJob({
           : j
       );
       emit();
+      persistGeneratedSession({
+        kind,
+        slug,
+        itemId,
+        status: "done",
+      });
+      playGenerateDoneSfx();
     } catch (e) {
       jobs = jobs.map((j) =>
         j.id === id
@@ -143,6 +191,7 @@ export function startGenerateJob({
           : j
       );
       emit();
+      playGenerateErrorSfx();
     }
   })();
 
@@ -183,4 +232,13 @@ export function useRefreshOnGenerateDone(slug, kind, onDone) {
       }
     });
   }, [slug, kind, onDone]);
+}
+
+/** 点击成功弹窗时，已挂载的工作室打开刚生成的内容 */
+export function usePlayGenerated(slug, kind, onPlay) {
+  useEffect(() => {
+    return subscribePlayGenerated((req) => {
+      if (req.slug === slug && req.kind === kind) onPlay?.(req);
+    });
+  }, [slug, kind, onPlay]);
 }

@@ -6,6 +6,7 @@ import {
   startGenerateJob,
   useGenerateKind,
   useRefreshOnGenerateDone,
+  usePlayGenerated,
 } from "../generateJobs";
 import StudioShell from "./StudioShell";
 import { useActiveFilePaths } from "../LearningContext";
@@ -278,6 +279,7 @@ export default function CardsStudio() {
     [refresh]
   );
   useRefreshOnGenerateDone(slug, "cards", onJobDone);
+  usePlayGenerated(slug, "cards", onJobDone);
 
   const handleGenerate = () => {
     if (!filePaths.length) {

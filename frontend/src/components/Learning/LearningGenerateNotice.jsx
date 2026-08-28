@@ -4,6 +4,7 @@ import { CheckCircle, WarningCircle, X } from "@phosphor-icons/react";
 import {
   subscribeGenerateJobs,
   dismissGenerateJob,
+  requestPlayGenerated,
 } from "./generateJobs";
 
 export default function LearningGenerateNotice() {
@@ -27,7 +28,10 @@ export default function LearningGenerateNotice() {
             <button
               type="button"
               onClick={() => {
-                if (ok && job.href) navigate(job.href);
+                if (ok) {
+                  requestPlayGenerated(job);
+                  if (job.href) navigate(job.href);
+                }
                 dismissGenerateJob(job.id);
               }}
               className="w-full text-left px-3.5 py-3 flex items-start gap-2.5 hover:bg-theme-file-picker-hover/50 transition-colors"

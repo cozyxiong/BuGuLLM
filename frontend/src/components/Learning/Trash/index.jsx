@@ -39,7 +39,7 @@ const TYPE_LABELS = {
   quiz: "测试题",
   quiz_single: "单选题",
   quiz_multi: "多选题",
-  mindmap: "思维导图",
+  mindmap: "思维目录",
 };
 
 function itemKind(item) {

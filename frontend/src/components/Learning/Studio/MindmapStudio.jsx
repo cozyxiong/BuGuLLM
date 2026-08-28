@@ -6,6 +6,7 @@ import {
   startGenerateJob,
   useGenerateKind,
   useRefreshOnGenerateDone,
+  usePlayGenerated,
 } from "../generateJobs";
 import StudioShell from "./StudioShell";
 import MindMap, { MindMapList } from "../MindMap";
@@ -101,6 +102,7 @@ export default function MindmapStudio() {
     [refresh]
   );
   useRefreshOnGenerateDone(slug, "mindmap", onJobDone);
+  usePlayGenerated(slug, "mindmap", onJobDone);
 
   const handleClearAll = async () => {
     const ids = list.map((m) => m.id).filter(Boolean);
@@ -120,7 +122,7 @@ export default function MindmapStudio() {
 
   const handleDeleteMap = async (m) => {
     const n = normalizeLearningItem(m);
-    const name = n?.sessionTitle || n?.title || m.title || "该导图";
+    const name = n?.sessionTitle || n?.title || m.title || "该目录";
     if (!window.confirm(`确定删除「${name}」？`)) return;
     if (selected?.id === m.id) setEnlarged(false);
     const r = await Learning.delete(slug, m.id);
@@ -170,8 +172,8 @@ export default function MindmapStudio() {
 
   return (
     <StudioShell
-      title="思维导图"
-      description="根据所选笔记生成结构化知识导图，便于梳理与复习"
+      title="思维目录"
+      description="根据所选笔记生成结构化知识目录，便于梳理与复习"
       requireDocs
       fillHeight
       budgetKind="mindmap"
@@ -215,7 +217,7 @@ export default function MindmapStudio() {
                   disabled={!filePaths.length}
                   onClick={handleGenerate}
                 >
-                  生成导图
+                  生成目录
                 </GenerateButton>
                 {!filePaths.length && (
                   <p className="text-[10px] text-theme-text-secondary leading-relaxed">

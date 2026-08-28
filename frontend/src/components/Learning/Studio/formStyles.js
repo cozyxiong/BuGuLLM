@@ -9,7 +9,7 @@ export const fieldControl =
 export const fieldArea = `${fieldControl} resize-none`;
 
 export const primaryBtn =
-  "inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-theme-button-primary hover:opacity-90 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-opacity";
+  "inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-theme-button-primary hover:opacity-90 rounded-xl disabled:opacity-45 disabled:cursor-default transition-opacity";
 
 export const panelCard =
   "rounded-xl border border-theme-modal-border bg-theme-bg-primary p-4 sm:p-5";

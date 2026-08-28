@@ -99,9 +99,9 @@ export function MindMapList({ list = [], selectedId, onSelect, onDelete, onRenam
     return (
       <div className="flex flex-col items-center justify-center h-full px-4 py-10 text-theme-text-secondary">
         <TreeStructure className="w-6 h-6 mb-2 opacity-30" />
-        <p className="text-[11px] text-center">暂无已保存的导图</p>
+        <p className="text-[11px] text-center">暂无已保存的目录</p>
         <p className="text-[10px] text-center mt-1 opacity-60">
-          选择笔记后点击「生成导图」
+          选择笔记后点击「生成目录」
         </p>
       </div>
     );
@@ -119,7 +119,7 @@ export function MindMapList({ list = [], selectedId, onSelect, onDelete, onRenam
           <HistoryListItem
             key={m.id}
             icon={TreeStructure}
-            title={n?.sessionTitle || n?.title || m.title || "思维导图"}
+            title={n?.sessionTitle || n?.title || m.title || "思维目录"}
             subtitle={names.length ? names.join("、") : undefined}
             active={active}
             onSelect={() => onSelect?.(m)}
@@ -143,15 +143,15 @@ export default function MindMap({ data, item, title }) {
     normalized?.title ||
     data?.title ||
     item?.title ||
-    "思维导图";
+    "思维目录";
 
   if (!nodes.length) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-theme-text-secondary bg-theme-bg-secondary px-4">
         <TreeStructure className="w-12 h-12 mb-3 opacity-50" />
-        <p className="text-sm">暂无思维导图内容</p>
+        <p className="text-sm">暂无思维目录内容</p>
         <p className="text-xs mt-1 opacity-70 text-center">
-          在左侧选择笔记后点击「生成导图」
+          在左侧选择笔记后点击「生成目录」
         </p>
       </div>
     );

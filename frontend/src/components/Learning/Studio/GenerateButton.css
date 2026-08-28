@@ -1,6 +1,21 @@
 .learn-gen-btn {
   position: relative;
   overflow: hidden;
+  cursor: pointer;
+}
+
+.learn-gen-btn:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
+.learn-gen-btn.is-busy {
+  cursor: default;
+  opacity: 0.92;
+}
+
+.learn-gen-btn:hover:not(:disabled) {
+  opacity: 0.9;
 }
 
 .learn-gen-btn__sheen {

@@ -16,7 +16,7 @@ import { useWorkspaceUI } from "@/components/WorkspaceUIContext";
 
 const NAV = [
   { key: "", title: "首页", end: true },
-  { key: "mindmap", title: "导图", icon: TreeStructure },
+  { key: "mindmap", title: "目录", icon: TreeStructure },
   { key: "cards", title: "卡片", icon: Cards },
   { key: "quiz", title: "测试", icon: Question },
   { key: "review", title: "复习", icon: Brain },

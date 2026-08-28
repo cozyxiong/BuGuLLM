@@ -18,7 +18,7 @@ import {
 const MODULES = [
   {
     key: "mindmap",
-    title: "思维导图",
+    title: "思维目录",
     desc: "把笔记结构整理成可浏览的知识树",
     icon: TreeStructure,
   },
@@ -75,7 +75,7 @@ export default function StudioHome() {
             学习
           </h1>
           <p className="text-sm text-theme-text-secondary leading-relaxed max-w-md mx-auto">
-            在左侧选择笔记，生成导图、卡片与测试，结合知识库巩固理解，用于日常学习与复习。
+            在左侧选择笔记，生成目录、卡片与测试，结合知识库巩固理解，用于日常学习与复习。
           </p>
           <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] text-theme-text-secondary bg-theme-settings-input-bg border border-theme-modal-border">
