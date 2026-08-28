@@ -45,6 +45,7 @@ export default function Quiz({
   answer = null,
   onSubmit,
   allowRetry = false,
+  keepTrash = false,
 }) {
   const q = normalizeLearningItem(item);
   const multi = !!q?.multi;
@@ -102,9 +103,11 @@ export default function Quiz({
     });
     if (q.id && slug) {
       setLoading(true);
-      const result = await Learning.review(slug, q.id, correct ? "good" : "again");
+      const result = await Learning.review(slug, q.id, correct ? "good" : "again", {
+        keepTrash,
+      });
       if (result.error) showToast(`记录失败: ${result.error}`, "error");
-      if (!correct) await Learning.moveToTrash(slug, q.id);
+      if (!correct && !keepTrash) await Learning.moveToTrash(slug, q.id);
       setLoading(false);
     }
   };

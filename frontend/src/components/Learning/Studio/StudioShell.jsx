@@ -17,8 +17,13 @@ export default function StudioShell({
   /** cards | quiz | mindmap，用于字数 / 窗口提示 */
   budgetKind,
   budgetCount,
+  /** 资料范围：当前 / 全部 */
+  docsFilterable = false,
+  docsShowAll = false,
+  onDocsShowAllChange,
 }) {
   const activePaths = useActiveFilePaths();
+  const canToggleDocs = docsFilterable && activePaths.length > 0;
 
   return (
     <div className="h-full flex flex-col min-h-0 bg-theme-bg-secondary">
@@ -38,13 +43,52 @@ export default function StudioShell({
             {budgetKind ? (
               <NoteBudgetBadge kind={budgetKind} count={budgetCount} />
             ) : null}
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] text-theme-text-secondary bg-theme-settings-input-bg border border-theme-modal-border">
-              <FileText size={12} weight="fill" className="text-theme-button-primary" />
-              资料{" "}
-              <strong className="text-theme-button-primary font-semibold">
-                {activePaths.length}
-              </strong>
-            </span>
+            {canToggleDocs ? (
+              <div
+                className="relative grid grid-cols-2 p-0.5 rounded-full min-w-[7.25rem] bg-theme-settings-input-bg border border-theme-modal-border"
+                role="group"
+                aria-label="错题范围"
+              >
+                <span
+                  className="pointer-events-none absolute top-0.5 bottom-0.5 left-0.5 w-[calc(50%-2px)] rounded-full bg-white shadow transition-transform duration-300 ease-[cubic-bezier(0.22,0.61,0.36,1)]"
+                  style={{
+                    transform: docsShowAll
+                      ? "translateX(100%)"
+                      : "translateX(0)",
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => onDocsShowAllChange?.(false)}
+                  className={`relative z-[1] h-6 px-2 rounded-full text-[11px] font-medium transition-colors ${
+                    docsShowAll
+                      ? "text-theme-text-secondary"
+                      : "text-theme-text-primary"
+                  }`}
+                >
+                  当前
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onDocsShowAllChange?.(true)}
+                  className={`relative z-[1] h-6 px-2 rounded-full text-[11px] font-medium transition-colors ${
+                    docsShowAll
+                      ? "text-theme-text-primary"
+                      : "text-theme-text-secondary"
+                  }`}
+                >
+                  全部
+                </button>
+              </div>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] text-theme-text-secondary bg-theme-settings-input-bg border border-theme-modal-border">
+                <FileText size={12} weight="fill" className="text-theme-button-primary" />
+                资料{" "}
+                <strong className="text-theme-button-primary font-semibold">
+                  {activePaths.length}
+                </strong>
+              </span>
+            )}
           </div>
         </div>
         {requireDocs && activePaths.length === 0 && (

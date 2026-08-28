@@ -30,8 +30,8 @@ export default function SettingsStudio() {
     }
     showToast(
       enabled
-        ? "已开启间隔复习，将按 SM-2 安排到期项"
-        : "已关闭间隔复习（默认练习模式）",
+        ? "已开启间隔复习，将按垃圾桶里到期的题安排"
+        : "已关闭间隔复习，按垃圾桶最近的题练习",
       "success"
     );
   };
@@ -45,10 +45,10 @@ export default function SettingsStudio() {
           <div className={`${panelCard} flex items-start justify-between gap-4`}>
             <div className="min-w-0">
               <p className="text-sm text-theme-text-primary font-semibold">
-                AI 间隔复习（SM-2）
+                间隔复习（SM-2）
               </p>
               <p className="text-xs text-theme-text-secondary mt-1.5 leading-relaxed">
-                默认关闭。关闭时为自由练习；开启后根据评分自动计算下次复习时间。
+                默认关闭。关闭时按垃圾桶最近的卡片和测试练习；开启后只复习垃圾桶里已到期的题，并根据评分计算下次时间。
               </p>
             </div>
             <button

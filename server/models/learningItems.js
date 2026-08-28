@@ -50,33 +50,27 @@ const LearningItem = {
     return { items: items.map(serializeItem), total };
   },
 
-  /** practiceMode=true: 全部非垃圾卡/题；false: SM-2 到期队列 */
+  /**
+   * 复习队列来自回收站里的卡片 / 测试（不含思维目录）。
+   * 不超过 limit 时全部返回；超出才按最近进站或 SM-2 取 limit 条。
+   */
   getDueReviews: async function (
     workspaceId,
-    { limit = 40, practiceMode = false } = {}
+    { limit = 30, practiceMode = false } = {}
   ) {
-    if (practiceMode) {
-      const items = await prisma.learning_items.findMany({
-        where: {
-          workspaceId,
-          reviewState: { not: "trash" },
-          itemType: { in: ["flashcard", "quiz_single", "quiz_multi"] },
-        },
-        orderBy: { createdAt: "desc" },
-        take: limit,
-      });
-      return items.map(serializeItem);
-    }
-
+    const where = {
+      workspaceId,
+      reviewState: "trash",
+      itemType: { in: ["flashcard", "quiz_single", "quiz_multi"] },
+    };
+    const total = await prisma.learning_items.count({ where });
+    const take = total > limit ? limit : undefined;
     const items = await prisma.learning_items.findMany({
-      where: {
-        workspaceId,
-        reviewState: { in: ["new", "learning", "review"] },
-        itemType: { in: ["flashcard", "quiz_single", "quiz_multi"] },
-        OR: [{ nextReviewAt: null }, { nextReviewAt: { lte: new Date() } }],
-      },
-      orderBy: { nextReviewAt: "asc" },
-      take: limit,
+      where,
+      orderBy: practiceMode
+        ? { lastUpdatedAt: "desc" }
+        : [{ nextReviewAt: "asc" }, { lastUpdatedAt: "desc" }],
+      ...(take ? { take } : {}),
     });
     return items.map(serializeItem);
   },
@@ -213,7 +207,13 @@ const LearningItem = {
    * @param {number} quality SM-2 0–5
    * @param {string} [ratingLabel] again|hard|good|easy
    */
-  review: async function (id, workspaceId, quality, ratingLabel = null) {
+  review: async function (
+    id,
+    workspaceId,
+    quality,
+    ratingLabel = null,
+    { keepTrash = false } = {}
+  ) {
     const item = await prisma.learning_items.findFirst({
       where: { id, workspaceId },
     });
@@ -227,11 +227,17 @@ const LearningItem = {
     });
     const failed = quality < 3;
     const now = new Date();
+    const stayTrash =
+      keepTrash || String(item.reviewState || "") === "trash";
 
     const updated = await prisma.learning_items.update({
       where: { id },
       data: {
-        reviewState: failed ? "learning" : "review",
+        reviewState: stayTrash
+          ? "trash"
+          : failed
+            ? "learning"
+            : "review",
         easeFactor: sm2.easeFactor,
         interval: sm2.interval,
         repetitions: failed ? 0 : item.repetitions + 1,

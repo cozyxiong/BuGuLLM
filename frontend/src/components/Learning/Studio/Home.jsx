@@ -25,25 +25,25 @@ const MODULES = [
   {
     key: "cards",
     title: "学习卡片",
-    desc: "根据笔记生成问答卡，答案来自知识库",
+    desc: "根据所选笔记生成问答卡片",
     icon: Cards,
   },
   {
     key: "quiz",
     title: "测试",
-    desc: "单选 / 多选自测，巩固笔记要点",
+    desc: "根据所选笔记生成单选或多选试题",
     icon: Question,
   },
   {
     key: "review",
     title: "复习",
-    desc: "自由练习或开启间隔复习",
+    desc: "复习垃圾桶里的错题",
     icon: Brain,
   },
   {
     key: "trash",
-    title: "回收站",
-    desc: "已移除或待清理的学习项",
+    title: "垃圾桶",
+    desc: "不记得的卡片和答错的测试都会进入垃圾桶",
     icon: Trash,
   },
   {

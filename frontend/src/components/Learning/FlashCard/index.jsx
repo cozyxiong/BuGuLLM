@@ -398,6 +398,7 @@ export default function FlashCard({
   failCount = 0,
   passCount = 0,
   answer = null,
+  keepTrash = false,
 }) {
   const [card, setCard] = useState(() => normalizeLearningItem(item));
   const [flipped, setFlipped] = useState(false);
@@ -458,7 +459,7 @@ export default function FlashCard({
     setReviewing(true);
     onReviewed?.(rating, card.id);
     if (card.id && slug) {
-      Learning.review(slug, card.id, rating).then((result) => {
+      Learning.review(slug, card.id, rating, { keepTrash }).then((result) => {
         if (result.error) showToast(`复习失败: ${result.error}`, "error");
       });
     }

@@ -219,11 +219,6 @@ export default function MindmapStudio() {
                 >
                   生成目录
                 </GenerateButton>
-                {!filePaths.length && (
-                  <p className="text-[10px] text-theme-text-secondary leading-relaxed">
-                    请先在左侧文件树选择笔记
-                  </p>
-                )}
               </div>
             </div>
           )}

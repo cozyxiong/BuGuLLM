@@ -20,7 +20,7 @@ const NAV = [
   { key: "cards", title: "卡片", icon: Cards },
   { key: "quiz", title: "测试", icon: Question },
   { key: "review", title: "复习", icon: Brain },
-  { key: "trash", title: "回收站", icon: Trash },
+  { key: "trash", title: "垃圾桶", icon: Trash },
   { key: "settings", title: "设置", icon: GearSix },
 ];
 

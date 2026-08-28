@@ -368,7 +368,7 @@ export default function CardsStudio() {
   return (
     <StudioShell
       title="学习卡片"
-      description="根据所选笔记生成问答卡片；答案来自知识库检索。生成记录会保留在右侧，随时可继续翻阅。"
+      description="根据所选笔记生成问答卡片"
       requireDocs
       fillHeight
       budgetKind="cards"
@@ -458,11 +458,6 @@ export default function CardsStudio() {
                 >
                   生成卡片
                 </GenerateButton>
-                {!filePaths.length && (
-                  <p className="text-[10px] text-theme-text-secondary leading-relaxed">
-                    请先在左侧文件树选择笔记
-                  </p>
-                )}
               </div>
             </div>
           )}

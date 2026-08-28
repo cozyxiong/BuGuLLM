@@ -23,7 +23,7 @@ const Learning = {
     return jsonFetch(url, { method: "GET" });
   },
 
-  getDue: async function (slug, limit = 40) {
+  getDue: async function (slug, limit = 30) {
     const url = new URL(`${API_BASE}/learning/${slug}/due`);
     url.searchParams.set("limit", String(limit));
     return jsonFetch(url, { method: "GET" });
@@ -71,10 +71,10 @@ const Learning = {
     );
   },
 
-  review: async function (slug, itemId, rating) {
+  review: async function (slug, itemId, rating, { keepTrash = false } = {}) {
     return jsonFetch(`${API_BASE}/learning/${slug}/review`, {
       method: "POST",
-      body: JSON.stringify({ itemId, rating }),
+      body: JSON.stringify({ itemId, rating, keepTrash: !!keepTrash }),
     });
   },
 

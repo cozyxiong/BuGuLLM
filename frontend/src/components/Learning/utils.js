@@ -150,6 +150,22 @@ function fileNameFromPath(p) {
     .pop();
 }
 
+function normPath(p) {
+  return String(p || "").replace(/\\/g, "/").replace(/^\/+/, "");
+}
+
+/** 学习项是否来自当前选中的资料（含文件夹前缀） */
+export function itemMatchesSourcePaths(item, selectedPaths = []) {
+  const wanted = (selectedPaths || []).map(normPath).filter(Boolean);
+  if (!wanted.length) return true;
+  const c = parseItemContent(item);
+  const sources = (c.sourcePaths || item.sourcePaths || []).map(normPath);
+  if (!sources.length) return false;
+  return sources.some((src) =>
+    wanted.some((sel) => src === sel || src.startsWith(sel + "/") || sel.startsWith(src + "/"))
+  );
+}
+
 export function sessionSourceLabel(items = []) {
   const names = [];
   const seen = new Set();

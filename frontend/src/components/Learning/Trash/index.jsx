@@ -49,7 +49,13 @@ function itemKind(item) {
   return "quiz";
 }
 
-export default function TrashBin({ slug, items = [], onRefresh }) {
+export default function TrashBin({
+  slug,
+  items = [],
+  onRefresh,
+  emptyTitle,
+  emptyHint,
+}) {
   const list = useMemo(
     () => (items || []).map(normalizeLearningItem).filter(Boolean),
     [items]
@@ -219,10 +225,10 @@ export default function TrashBin({ slug, items = [], onRefresh }) {
           <Trash className="w-7 h-7 text-theme-button-primary" weight="duotone" />
         </div>
         <p className="text-sm font-semibold text-theme-text-primary mb-1">
-          回收站为空
+          {emptyTitle || "垃圾桶为空"}
         </p>
         <p className="text-xs text-theme-text-secondary max-w-xs leading-relaxed">
-          卡片打叉、测试答错的题目会集中在这里，答对后可删除
+          {emptyHint || "不记得的卡片和答错的测试都会进入垃圾桶"}
         </p>
       </div>
     );
@@ -232,7 +238,7 @@ export default function TrashBin({ slug, items = [], onRefresh }) {
     mode === "result" ? (
       <>
         <SessionPlayerBar
-          session={{ title: "回收站", items: list }}
+          session={{ title: "垃圾桶", items: list }}
           index={0}
           hidePager
           onClose={closeViewer}
@@ -242,7 +248,7 @@ export default function TrashBin({ slug, items = [], onRefresh }) {
             items={list}
             answers={answers}
             center
-            title="回收站结果"
+            title="垃圾桶结果"
             reviewLabel="回顾全部"
             reviewWrongLabel="回顾错题"
             retakeLabel="重新复习"
@@ -257,7 +263,7 @@ export default function TrashBin({ slug, items = [], onRefresh }) {
     ) : current ? (
     <>
       <SessionPlayerBar
-        session={{ title: "回收站", items: playItems }}
+        session={{ title: "垃圾桶", items: playItems }}
         index={index}
         onIndexChange={setIndex}
         unit=" 项"
@@ -269,6 +275,7 @@ export default function TrashBin({ slug, items = [], onRefresh }) {
           <FlashCard
             item={current}
             slug={slug}
+            keepTrash
             answer={currentAnswer}
             onReviewed={(rating, ratedId) => {
               const fail = rating === "again" || rating === "hard";
@@ -297,6 +304,7 @@ export default function TrashBin({ slug, items = [], onRefresh }) {
             slug={slug}
             center
             allowRetry
+            keepTrash
             answer={currentAnswer}
             onPrev={goPrev}
             onNext={goNext}

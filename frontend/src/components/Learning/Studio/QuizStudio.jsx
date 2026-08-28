@@ -347,7 +347,7 @@ export default function QuizStudio() {
   return (
     <StudioShell
       title="测试"
-      description="根据所选笔记生成单选或多选试题。生成记录会保留在右侧，离开后再进来也能继续作答。"
+      description="根据所选笔记生成单选或多选试题。"
       requireDocs
       fillHeight
       budgetKind="quiz"
@@ -446,11 +446,6 @@ export default function QuizStudio() {
                 >
                   生成测试
                 </GenerateButton>
-                {!filePaths.length && (
-                  <p className="text-[10px] text-theme-text-secondary leading-relaxed">
-                    请先在左侧文件树选择笔记
-                  </p>
-                )}
               </div>
             </div>
           )}

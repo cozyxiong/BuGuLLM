@@ -204,7 +204,7 @@ function learningEndpoints(app) {
         const workspaceId = response.locals.workspace.id;
         const srEnabled = await isSpacedRepetitionEnabled(workspaceId);
         const items = await LearningItem.getDueReviews(workspaceId, {
-          limit: Number(request.query.limit) || 40,
+          limit: Number(request.query.limit) || 30,
           practiceMode: !srEnabled,
         });
         response.status(200).json({
@@ -357,7 +357,7 @@ function learningEndpoints(app) {
     routeGuards,
     async (request, response) => {
       try {
-        const { itemId, rating } = reqBody(request);
+        const { itemId, rating, keepTrash } = reqBody(request);
         if (itemId == null || rating == null) {
           return response
             .status(400)
@@ -373,7 +373,8 @@ function learningEndpoints(app) {
           Number(itemId),
           response.locals.workspace.id,
           quality,
-          label
+          label,
+          { keepTrash: keepTrash === true }
         );
         response.status(200).json({ item });
       } catch (error) {

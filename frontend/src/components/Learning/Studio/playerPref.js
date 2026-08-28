@@ -20,3 +20,23 @@ export function savePlayerOpen(kind, slug, open) {
     /* ignore */
   }
 }
+
+function trashScopeKey(slug) {
+  return `bagullm.learn.trash.showAll.${slug}`;
+}
+
+export function loadTrashShowAll(slug) {
+  try {
+    return sessionStorage.getItem(trashScopeKey(slug)) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function saveTrashShowAll(slug, showAll) {
+  try {
+    sessionStorage.setItem(trashScopeKey(slug), showAll ? "1" : "0");
+  } catch {
+    /* ignore */
+  }
+}
