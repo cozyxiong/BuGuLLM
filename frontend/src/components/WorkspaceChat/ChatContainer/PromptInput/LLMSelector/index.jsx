@@ -20,6 +20,7 @@ import System from "@/models/system";
 export default function LLMSelectorModal({
   workspaceSlug = null,
   initialProvider = null,
+  compact = false,
 }) {
   const { slug: urlSlug } = useParams();
   const slug = urlSlug ?? workspaceSlug;
@@ -120,12 +121,80 @@ export default function LLMSelectorModal({
     return (
       <div
         id="llm-selector-modal"
-        className="w-full h-[388px] flex flex-col items-center justify-center gap-2"
+        className={`w-full flex flex-col items-center justify-center gap-2 ${
+          compact ? "h-40" : "h-[388px]"
+        }`}
       >
         <PreLoader size={12} />
         <p className="text-zinc-400 light:text-slate-500 text-sm">
           {t("chat_window.workspace_llm_manager.loading_workspace_settings")}
         </p>
+      </div>
+    );
+  }
+
+  if (compact) {
+    return (
+      <div
+        id="llm-selector-modal"
+        className="w-full max-h-[min(28rem,70vh)] flex flex-col overflow-hidden"
+      >
+        <LLMSelectorSidePanel
+          compact
+          availableProviders={availableProviders}
+          selectedLLMProvider={selectedLLMProvider}
+          onSearchChange={handleSearch}
+          onProviderClick={handleProviderSelection}
+        />
+        <div className="p-3 flex flex-col gap-2.5 min-h-0">
+          <p className="text-xs font-medium text-white light:text-slate-800 truncate">
+            {t("chat_window.workspace_llm_manager.available_models", {
+              provider: providerName,
+            })}
+          </p>
+          {!missingCredentials &&
+            (selectedLLMProvider === "anythingllm-router" ? (
+              <RouterPickerSelection
+                selectedRouterId={selectedRouterId}
+                setSelectedRouterId={setSelectedRouterId}
+                setHasChanges={setHasChanges}
+              />
+            ) : (
+              <ChatModelSelection
+                provider={selectedLLMProvider}
+                setHasChanges={setHasChanges}
+                selectedLLMModel={selectedLLMModel}
+                setSelectedLLMModel={setSelectedLLMModel}
+              />
+            ))}
+          <NoSetupWarning
+            showing={missingCredentials}
+            onSetupClick={() => {
+              window.dispatchEvent(
+                new CustomEvent(PROVIDER_SETUP_EVENT, {
+                  detail: {
+                    provider: WORKSPACE_LLM_PROVIDERS.find(
+                      (p) => p.value === selectedLLMProvider
+                    ),
+                    settings,
+                  },
+                })
+              );
+            }}
+          />
+          {hasChanges && !missingCredentials && (
+            <button
+              type="button"
+              disabled={saving}
+              onClick={handleSave}
+              className="border-none text-xs px-4 py-1.5 font-semibold rounded-lg bg-white text-zinc-900 hover:bg-zinc-200 light:bg-slate-800 light:text-white light:hover:bg-slate-700 h-8 w-full cursor-pointer transition-colors"
+            >
+              {saving
+                ? t("chat_window.workspace_llm_manager.saving")
+                : t("chat_window.workspace_llm_manager.save")}
+            </button>
+          )}
+        </div>
       </div>
     );
   }

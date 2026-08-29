@@ -33,6 +33,7 @@ import QuickActions from "@/components/lib/QuickActions";
 import ChatSettingsMenu from "./ChatSettingsMenu";
 import WorkspaceModelPicker from "./WorkspaceModelPicker";
 import { ChatSidebarProvider } from "./ChatSidebar";
+import { useWorkspaceUI } from "@/components/WorkspaceUIContext";
 import SourcesSidebar from "./SourcesSidebar";
 import MemoriesSidebar from "./MemoriesSidebar";
 
@@ -45,6 +46,8 @@ export default function ChatContainer({
 }) {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { chatMode } = useWorkspaceUI();
+  const docked = chatMode === "compose";
   const [loadingResponse, setLoadingResponse] = useState(false);
   const [chatHistory, setChatHistory] = useState(knownHistory);
   const [socketId, setSocketId] = useState(null);
@@ -71,7 +74,7 @@ export default function ChatContainer({
     const observer = new ResizeObserver(([entry]) => {
       const inputHeight =
         entry.borderBoxSize?.[0]?.blockSize ?? entry.target.offsetHeight;
-      chatEl.style.paddingBottom = `${inputHeight}px`;
+      chatEl.style.paddingBottom = `${Math.ceil(inputHeight) + 8}px`;
     });
     observer.observe(wrapper);
     return () => observer.disconnect();
@@ -456,10 +459,19 @@ export default function ChatContainer({
             threadSlug={activeThreadSlug}
           />
           <div className={paneClass}>
+            {fillPane ? (
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-x-0 top-0 h-16 z-20 bg-gradient-to-b from-theme-bg-secondary from-[70%] to-transparent"
+              />
+            ) : null}
             {isMobile && <SidebarMobileHeader />}
-            <WorkspaceModelPicker workspaceSlug={workspace.slug} />
+            <WorkspaceModelPicker
+              workspaceSlug={workspace.slug}
+              variant={docked ? "controls" : "full"}
+            />
             <DnDFileUploaderWrapper>
-              <div className="flex flex-col h-full w-full items-center justify-center overflow-y-auto py-8 px-3">
+              <div className="flex flex-col h-full w-full items-center justify-center overflow-y-auto py-8 px-4">
                 <div className="flex flex-col items-center w-full max-w-[750px] shrink-0">
                   <h1 className="text-white text-xl md:text-2xl mb-8 text-center">
                     {t("main-page.greeting")}
@@ -508,8 +520,17 @@ export default function ChatContainer({
         <div
           className={`${paneClass} text-white light:text-slate-900`}
         >
+          {fillPane ? (
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-x-0 top-0 h-16 z-20 bg-gradient-to-b from-theme-bg-secondary from-[70%] to-transparent"
+            />
+          ) : null}
           {isMobile && <SidebarMobileHeader />}
-          <WorkspaceModelPicker workspaceSlug={workspace.slug} />
+          <WorkspaceModelPicker
+            workspaceSlug={workspace.slug}
+            variant={docked ? "controls" : "full"}
+          />
           <DnDFileUploaderWrapper>
             <div className="flex flex-col h-full w-full pb-20 md:pb-0">
               <div className="contents">

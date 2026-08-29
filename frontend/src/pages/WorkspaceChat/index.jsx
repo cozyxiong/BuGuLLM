@@ -67,11 +67,14 @@ function MainWorkspacePane() {
 
   const loadingWs = loadedSlug !== slug;
   const showDoc = !!selectedFile;
-  const showEmpty = !selectedFile && chatMode !== "full";
+  const covering = chatMode === "full";
+  const docked = chatMode === "compose";
+  const showEmpty = !selectedFile && !covering;
+  const showChat = covering || docked;
 
   return (
     <div className="relative flex-1 min-w-0 h-full flex flex-col">
-      <div className="flex-1 min-h-0 h-full relative">
+      <div className="flex-1 min-h-0 h-full relative flex">
         {/*
           文档编辑器在全屏对话时只隐藏、不卸载。
           否则缩小对话会 remount FileEditor → 重新 readFile，表现为「刷新文档」。
@@ -79,11 +82,11 @@ function MainWorkspacePane() {
         {showDoc && (
           <div
             className={
-              chatMode === "full"
+              covering
                 ? "hidden"
-                : "absolute inset-0 h-full w-full"
+                : "relative flex-1 min-w-0 h-full"
             }
-            aria-hidden={chatMode === "full"}
+            aria-hidden={covering}
           >
             <FileEditor
               key={selectedFile.path}
@@ -95,11 +98,19 @@ function MainWorkspacePane() {
         )}
 
         {showEmpty && (
-          <EmptyKnowledgeState workspaceName={workspace?.name} />
+          <div className="relative flex-1 min-w-0 h-full">
+            <EmptyKnowledgeState workspaceName={workspace?.name} />
+          </div>
         )}
 
-        {chatMode === "full" && (
-          <div className="absolute inset-0 h-full w-full">
+        {showChat && (
+          <div
+            className={
+              covering
+                ? "absolute inset-0 h-full w-full z-10"
+                : "relative w-[28rem] max-w-[48%] shrink-0 h-full border-l border-theme-modal-border bg-theme-bg-secondary"
+            }
+          >
             <WorkspaceChatContainer
               loading={loadingWs}
               workspace={workspace}
@@ -109,7 +120,7 @@ function MainWorkspacePane() {
         )}
       </div>
 
-      {chatMode !== "full" && <FloatingLearning />}
+      {chatMode === "fab" && <FloatingLearning />}
       <FloatingChat loading={loadingWs} workspace={workspace} />
     </div>
   );

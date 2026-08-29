@@ -15,6 +15,7 @@ import {
 import useTextSize from "@/hooks/useTextSize";
 import { useTranslation } from "react-i18next";
 import Appearance from "@/models/appearance";
+import { useWorkspaceUI } from "@/components/WorkspaceUIContext";
 import usePromptInputStorage from "@/hooks/usePromptInputStorage";
 import ToolsMenu, { TOOLS_MENU_KEYBOARD_EVENT } from "./ToolsMenu";
 import Workspace from "@/models/workspace";
@@ -51,6 +52,8 @@ export default function PromptInput({
 }) {
   const { t } = useTranslation();
   const { isDisabled } = useIsDisabled();
+  const { chatMode } = useWorkspaceUI();
+  const docked = chatMode === "compose";
   const [promptInput, setPromptInput] = useState("");
   const [showTools, setShowTools] = useState(false);
   const autoOpenedToolsRef = useRef(false);
@@ -307,8 +310,10 @@ export default function PromptInput({
       id="prompt-input-wrapper"
       className={
         centered
-          ? "w-full relative flex justify-center items-center"
-          : "w-full fixed md:absolute bottom-0 left-0 z-10 flex justify-center items-center pwa:pb-5"
+          ? `w-full relative flex justify-center items-center ${docked ? "px-4" : ""}`
+          : docked
+            ? "w-full absolute bottom-0 left-0 z-[15] flex justify-center items-center px-4 pb-4 pt-8 bg-gradient-to-t from-theme-bg-secondary from-[55%] to-transparent"
+            : "w-full fixed md:absolute bottom-0 left-0 z-10 flex justify-center items-center pwa:pb-5"
       }
     >
       <form
@@ -316,13 +321,21 @@ export default function PromptInput({
         className={
           centered
             ? "flex flex-col gap-y-1 rounded-t-lg w-full items-center"
-            : "flex flex-col gap-y-1 rounded-t-lg md:w-full w-full mx-auto max-w-[750px] items-center"
+            : docked
+              ? "flex flex-col gap-y-1 w-full items-center"
+              : "flex flex-col gap-y-1 rounded-t-lg md:w-full w-full mx-auto max-w-[750px] items-center"
         }
       >
         <div
-          className={`flex items-center rounded-lg md:w-full ${centered ? "mb-0" : "mb-4"}`}
+          className={`flex items-center rounded-lg md:w-full ${
+            centered || docked ? "mb-0" : "mb-4"
+          }`}
         >
-          <div className="relative w-[95vw] md:w-[750px]">
+          <div
+            className={`relative ${
+              docked || centered ? "w-full" : "w-[95vw] md:w-[750px]"
+            }`}
+          >
             <ToolsMenu
               workspace={workspace}
               showing={showTools}

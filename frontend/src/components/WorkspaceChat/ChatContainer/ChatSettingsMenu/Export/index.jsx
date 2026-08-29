@@ -75,7 +75,7 @@ export default function ExportRow({
 function ExportSubmenu({ onSelect, exporting }) {
   return (
     <div className="absolute right-full top-0 z-[70] mr-1">
-      <div className="bg-zinc-800 light:bg-slate-50 border border-zinc-700 light:border-slate-300 rounded-lg p-3.5 w-[130px] flex flex-col gap-1.5 shadow-xl">
+      <div className="bg-zinc-800 light:bg-white border border-zinc-700/80 light:border-slate-200 rounded-2xl p-3.5 w-[130px] flex flex-col gap-1.5 shadow-[0_16px_48px_rgba(0,0,0,0.28)]">
         {EXPORT_FORMATS.map((format) => (
           <div
             key={format.key}

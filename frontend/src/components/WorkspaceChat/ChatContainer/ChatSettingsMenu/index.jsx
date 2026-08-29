@@ -17,6 +17,8 @@ import Workspace from "@/models/workspace";
 import paths from "@/utils/paths";
 import showToast from "@/utils/toast";
 import { setLastWorkspaceThread } from "@/utils/constants";
+import { useWorkspaceUI } from "@/components/WorkspaceUIContext";
+import WorkspaceModelPicker from "../WorkspaceModelPicker";
 
 export default function ChatSettingsMenu({
   history = [],
@@ -25,6 +27,8 @@ export default function ChatSettingsMenu({
 }) {
   const mode = useLoginMode();
   const navigate = useNavigate();
+  const { chatMode } = useWorkspaceUI();
+  const docked = chatMode === "compose";
   const { slug: urlSlug } = useParams();
   const workspaceSlug = workspace?.slug || urlSlug;
   const [showMenu, setShowMenu] = useState(false);
@@ -121,8 +125,12 @@ export default function ChatSettingsMenu({
 
   return (
     <div
-      className={`absolute top-3 md:top-5 z-30 flex items-center gap-1.5 ${
-        hasUserIcon ? "right-[55px] md:right-[67px]" : "right-4 md:right-6"
+      className={`absolute z-30 flex items-center gap-1.5 ${
+        docked
+          ? "top-2 left-2"
+          : `top-3 md:top-5 ${
+              hasUserIcon ? "right-[55px] md:right-[67px]" : "right-4 md:right-6"
+            }`
       }`}
     >
       {/* 开启新对话 — 在设置按钮左侧 */}
@@ -146,7 +154,7 @@ export default function ChatSettingsMenu({
             className="text-zinc-300 light:text-slate-600 group-hover:text-white light:group-hover:text-slate-800"
           />
         )}
-        <span className="hidden sm:inline text-xs text-zinc-300 light:text-slate-600 group-hover:text-white light:group-hover:text-slate-800">
+        <span className="text-xs text-zinc-300 light:text-slate-600 group-hover:text-white light:group-hover:text-slate-800">
           新对话
         </span>
       </button>
@@ -172,11 +180,16 @@ export default function ChatSettingsMenu({
           }
         />
       </button>
+      {docked ? (
+        <WorkspaceModelPicker variant="icon" workspaceSlug={workspaceSlug} />
+      ) : null}
 
       {showMenu && (
         <div
           ref={menuRef}
-          className="absolute right-0 top-[42px] z-50 bg-zinc-800 light:bg-slate-50 border border-zinc-700 light:border-slate-300 rounded-lg p-3 w-[260px] flex flex-col gap-2 shadow-lg overflow-visible"
+          className={`absolute top-[42px] z-50 bg-zinc-800 light:bg-white border border-zinc-700/80 light:border-slate-200 rounded-2xl p-3 w-[260px] flex flex-col gap-2 shadow-[0_16px_48px_rgba(0,0,0,0.28)] overflow-visible ${
+            docked ? "left-0" : "right-0"
+          }`}
         >
           {/* 历史对话：仅此处滚动，避免 overflow 裁切左侧子菜单 */}
           <div className="flex flex-col min-h-0 max-h-[200px] overflow-hidden rounded-md">

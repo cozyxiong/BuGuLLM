@@ -3,6 +3,7 @@ import { Link, useParams, useLocation } from "react-router-dom";
 import { GraduationCap } from "@phosphor-icons/react";
 import paths from "@/utils/paths";
 import { useWorkspaceUI } from "@/components/WorkspaceUIContext";
+import { isWorkspaceOverlayPath } from "@/hooks/useMainWorkspaceRoute";
 
 /**
  * 学习入口：对话 FAB 上方
@@ -12,11 +13,12 @@ export default function FloatingLearning() {
   const { pathname } = useLocation();
   const { chatMode } = useWorkspaceUI();
 
-  if (!slug || chatMode === "full") return null;
+  if (!slug || chatMode === "full" || chatMode === "compose") return null;
   if (pathname.includes("/learning")) return null;
 
-  // compose 底栏时略抬高，避免重叠
-  const bottom = chatMode === "compose" ? "5.5rem" : "5.75rem";
+  const overlay = isWorkspaceOverlayPath(pathname);
+  const bottom =
+    chatMode === "compose" && overlay ? "5.5rem" : "5.75rem";
 
   return (
     <Link

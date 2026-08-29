@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { ChatCircleDots, PaperPlaneRight, X } from "@phosphor-icons/react";
 import { useWorkspaceUI } from "@/components/WorkspaceUIContext";
 import {
@@ -9,16 +9,19 @@ import {
 } from "@/utils/constants";
 import paths from "@/utils/paths";
 import Workspace from "@/models/workspace";
+import { isWorkspaceOverlayPath } from "@/hooks/useMainWorkspaceRoute";
 
 /**
  * 浮动对话（锚定右侧内容区）：
  * fab     — 右下角圆形入口
- * compose — 内容区正下方一行简洁毛玻璃输入条
+ * compose — 文档右侧停靠对话栏（学习覆盖层上仍用底部输入条）
  * full    — 由主内容区铺满渲染（本组件返回 null）
  */
 export default function FloatingChat() {
   const { slug } = useParams();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const overlay = isWorkspaceOverlayPath(pathname);
   const { chatMode, setChatMode } = useWorkspaceUI();
   const [draft, setDraft] = useState("");
   const inputRef = useRef(null);
@@ -29,14 +32,13 @@ export default function FloatingChat() {
   /**
    * 进入全屏对话：优先恢复本工作区最近 thread（历史在 thread 上，不在默认 workspace 根路径）
    */
-  const goFullChat = async (pendingMessage = null) => {
+  const restoreThreadRoute = async (pendingMessage = null) => {
     if (pendingMessage) {
       sessionStorage.setItem(
         PENDING_HOME_MESSAGE,
         JSON.stringify({ message: pendingMessage, attachments: [] })
       );
     }
-    setChatMode("full");
     if (!slug) return;
 
     let threads = [];
@@ -74,6 +76,11 @@ export default function FloatingChat() {
     navigate(paths.workspace.chat(slug), { replace: true });
   };
 
+  const goFullChat = async (pendingMessage = null) => {
+    setChatMode("full");
+    await restoreThreadRoute(pendingMessage);
+  };
+
   useEffect(() => {
     if (chatMode === "compose") {
       const t = setTimeout(() => inputRef.current?.focus(), 220);
@@ -93,7 +100,10 @@ export default function FloatingChat() {
     return () => window.removeEventListener("keydown", onKey);
   }, [chatMode, setChatMode]);
 
-  const openCompose = () => setChatMode("compose");
+  const openCompose = () => {
+    setChatMode("compose");
+    if (!overlay) restoreThreadRoute();
+  };
   /** 双击直接进入全屏对话（恢复最近 thread，避免历史空白） */
   const openFull = () => {
     setDraft("");
@@ -151,15 +161,18 @@ export default function FloatingChat() {
         onClick={handleFabClick}
         className="absolute z-40 bottom-6 right-6 w-12 h-12 rounded-full bg-theme-bg-secondary backdrop-blur border border-theme-modal-border text-theme-text-primary shadow-lg flex items-center justify-center hover:scale-105 active:scale-95 transition-all duration-200 outline-none"
         aria-label="打开对话"
-        title="单击输入 · 双击全屏对话"
+        title={
+          overlay ? "单击输入 · 双击全屏对话" : "单击侧栏对话 · 双击全屏对话"
+        }
       >
         <ChatCircleDots size={22} weight="fill" />
       </button>
     );
   }
 
-  // —— Compose：右侧内容区正下方，一行简洁输入条 ——
+  // —— Compose：主工作区由右侧边栏承载；覆盖层仍用底部输入条 ——
   if (chatMode === "compose") {
+    if (!overlay) return null;
     return (
       <div className="absolute z-40 inset-x-0 bottom-0 flex justify-center px-4 sm:px-8 pb-5 pt-10 pointer-events-none">
         {/* 底部淡出渐变，让输入条更浮在内容上 */}

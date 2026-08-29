@@ -24,6 +24,7 @@ import useTextSize from "@/hooks/useTextSize";
 import useChatHistoryScrollHandle from "@/hooks/useChatHistoryScrollHandle";
 import { ThoughtExpansionProvider } from "./ThoughtContainer";
 import { MessageActionsProvider } from "./MessageActionsContext";
+import { useWorkspaceUI } from "@/components/WorkspaceUIContext";
 
 export default forwardRef(function (
   {
@@ -45,6 +46,8 @@ export default forwardRef(function (
   const isStreaming = history[history.length - 1]?.animate;
   const { showScrollbar } = Appearance.getSettings();
   const { textSizeClass } = useTextSize();
+  const { chatMode } = useWorkspaceUI();
+  const docked = chatMode === "compose";
 
   useEffect(() => {
     if (!isUserScrolling && (isAtBottom || isStreaming)) {
@@ -219,19 +222,31 @@ export default forwardRef(function (
     <MessageActionsProvider>
       <ThoughtExpansionProvider>
         <div
-          className={`markdown text-white/80 light:text-theme-text-primary font-light ${textSizeClass} h-full md:h-[83%] pb-[100px] pt-6 md:pt-0 md:pb-20 md:mx-0 overflow-y-scroll flex flex-col items-center justify-start ${showScrollbar ? "show-scrollbar" : "no-scroll"}`}
+          className={`markdown text-white/80 light:text-theme-text-primary font-light ${textSizeClass} overflow-y-scroll flex flex-col items-center justify-start ${
+            docked
+              ? "h-full pt-14 px-1 pb-4"
+              : chatMode === "full"
+                ? "h-full pt-14 pb-[100px] md:pb-20"
+                : "h-full md:h-[83%] pb-[100px] pt-6 md:pt-0 md:pb-20 md:mx-0"
+          } ${showScrollbar ? "show-scrollbar" : "no-scroll"}`}
           id="chat-history"
           ref={chatHistoryRef}
           onScroll={debouncedScroll}
         >
-          <div className="w-full max-w-[750px]">
+          <div
+            className={`w-full ${docked ? "max-w-none px-3.5" : "max-w-[750px]"}`}
+          >
             {compiledHistory.map((item, index) =>
               Array.isArray(item) ? renderStatusResponse(item, index) : item
             )}
           </div>
         </div>
         {!isAtBottom && (
-          <div className="absolute bottom-40 right-10 z-50 cursor-pointer animate-pulse">
+          <div
+            className={`absolute z-50 cursor-pointer animate-pulse ${
+              docked ? "bottom-36 right-1.5" : "bottom-40 right-4"
+            }`}
+          >
             <div className="flex flex-col items-center">
               <div
                 className="p-1 rounded-full border border-white/10 bg-white/10 hover:bg-white/20 hover:text-white"
