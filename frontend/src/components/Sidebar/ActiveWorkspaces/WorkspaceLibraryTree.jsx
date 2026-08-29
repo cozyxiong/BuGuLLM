@@ -16,6 +16,7 @@ import {
   FolderSimplePlus,
   FileArrowUp,
   Cube,
+  CaretDown,
 } from "@phosphor-icons/react";
 import showToast from "@/utils/toast";
 import {
@@ -38,6 +39,95 @@ function selectionAffectedByRemoval(selectedPath, removedPath, removedIsFolder) 
   if (sel === rem) return true;
   if (removedIsFolder && sel.startsWith(`${rem}/`)) return true;
   return false;
+}
+
+function parentFolderOf(filePath) {
+  const p = normalizeRelPath(filePath);
+  const i = p.lastIndexOf("/");
+  return i >= 0 ? p.slice(0, i) : "";
+}
+
+function collectFolders(nodes, acc = [], depth = 0) {
+  for (const n of nodes || []) {
+    if (n.type !== "folder") continue;
+    const p = normalizeRelPath(n.path);
+    acc.push({
+      path: p,
+      name: n.name || p.split("/").pop() || p,
+      depth,
+    });
+    collectFolders(n.items, acc, depth + 1);
+  }
+  return acc;
+}
+
+function FolderSelect({ value, options, onChange, disabled = false }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  const current = options.find((o) => o.path === value) || options[0];
+
+  useEffect(() => {
+    if (!open) return;
+    const onDoc = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, [open]);
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => setOpen((v) => !v)}
+        className="w-full h-8 px-2.5 rounded-lg bg-theme-settings-input-bg border border-theme-modal-border text-xs text-theme-text-primary flex items-center gap-1.5 hover:border-theme-button-primary/40 focus:outline-none focus:ring-1 focus:ring-theme-button-primary/50 focus:border-theme-button-primary/40 transition-colors disabled:opacity-50"
+      >
+        <FolderNotch
+          className="w-3.5 h-3.5 shrink-0 text-theme-button-primary"
+          weight="duotone"
+        />
+        <span className="flex-1 min-w-0 text-left truncate">
+          {current?.path ? current.path : "根目录"}
+        </span>
+        <CaretDown
+          className={`w-3 h-3 shrink-0 text-theme-text-secondary transition-transform ${
+            open ? "rotate-180" : ""
+          }`}
+          weight="bold"
+        />
+      </button>
+      {open ? (
+        <div className="absolute left-0 right-0 top-[calc(100%+6px)] z-[2010] max-h-52 overflow-y-auto rounded-xl border border-theme-modal-border bg-theme-bg-primary shadow-xl py-1">
+          {options.map((opt) => {
+            const active = opt.path === (current?.path || "");
+            return (
+              <button
+                key={opt.path || "__root__"}
+                type="button"
+                onClick={() => {
+                  onChange(opt.path);
+                  setOpen(false);
+                }}
+                className={`w-full flex items-center gap-2 px-3 py-2 text-xs text-left transition-colors ${
+                  active
+                    ? "bg-theme-button-primary/10 text-theme-text-primary"
+                    : "text-theme-text-primary hover:bg-theme-file-picker-hover"
+                }`}
+                style={{ paddingLeft: 12 + opt.depth * 14 }}
+              >
+                <FolderNotch
+                  className="w-3.5 h-3.5 shrink-0 text-theme-button-primary"
+                  weight={active ? "fill" : "duotone"}
+                />
+                <span className="truncate">{opt.path ? opt.name : "根目录"}</span>
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 function treeContainsPath(tree, filePath) {
@@ -76,7 +166,7 @@ export default function WorkspaceLibraryTree({ workspaceSlug }) {
   const [embedding, setEmbedding] = useState(false);
   const [showCreateMenu, setShowCreateMenu] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(null);
-  const [createInput, setCreateInput] = useState({ path: "", content: "" });
+  const [createInput, setCreateInput] = useState({ folder: "", name: "" });
   const [showConnectorModal, setShowConnectorModal] = useState(false);
   const [connectorSlug, setConnectorSlug] = useState("video");
   const fileInputRef = useRef(null);
@@ -147,29 +237,40 @@ export default function WorkspaceLibraryTree({ workspaceSlug }) {
     return () => document.removeEventListener("mousedown", onDoc);
   }, [showCreateMenu]);
 
+  const folderOptions = [
+    { path: "", name: "根目录", depth: 0 },
+    ...collectFolders(tree?.items),
+  ];
+
+  const openCreate = useCallback((kind, folder = "") => {
+    setShowCreateMenu(false);
+    setShowCreateModal(kind);
+    setCreateInput({
+      folder: normalizeRelPath(folder),
+      name: "",
+    });
+  }, []);
+
   const handleCreate = async () => {
-    if (!createInput.path.trim()) {
-      showToast("请输入名称", "error");
+    const name = createInput.name.trim().replace(/\\/g, "/");
+    if (!name || name.includes("/")) {
+      showToast(
+        showCreateModal === "file" ? "请输入文档名称" : "请输入文件夹名称",
+        "error"
+      );
       return;
     }
-    let path = createInput.path.trim().replace(/\\/g, "/");
+    const folder = normalizeRelPath(createInput.folder);
     if (showCreateModal === "file") {
-      // 右键「新增文档」会预填 folder/，需补全文件名
-      if (path.endsWith("/")) {
-        showToast("请输入文档名称", "error");
-        return;
-      }
-      if (!path.endsWith(".md")) path += ".md";
-      const result = await Library.writeMarkdown(
-        slug,
-        path,
-        createInput.content || ""
-      );
+      const filename = name.toLowerCase().endsWith(".md") ? name : `${name}.md`;
+      const path = folder ? `${folder}/${filename}` : filename;
+      const result = await Library.writeMarkdown(slug, path, "");
       if (result.error) {
         showToast(result.error, "error");
         return;
       }
     } else {
+      const path = folder ? `${folder}/${name}` : name;
       const result = await Library.createFolder(slug, path);
       if (result.error) {
         showToast(result.error, "error");
@@ -177,17 +278,18 @@ export default function WorkspaceLibraryTree({ workspaceSlug }) {
       }
     }
     setShowCreateModal(null);
-    setCreateInput({ path: "", content: "" });
+    setCreateInput({ folder: "", name: "" });
     await refreshSilently();
   };
 
   /** 文件夹右键 → 在该目录下新增文档 */
-  const handleNewDocumentInFolder = useCallback((folderNode) => {
-    if (!folderNode?.path) return;
-    const base = String(folderNode.path).replace(/\\/g, "/").replace(/\/+$/, "");
-    setShowCreateModal("file");
-    setCreateInput({ path: `${base}/`, content: "" });
-  }, []);
+  const handleNewDocumentInFolder = useCallback(
+    (folderNode) => {
+      if (!folderNode?.path) return;
+      openCreate("file", folderNode.path);
+    },
+    [openCreate]
+  );
 
   /** 导入到 Vault（单文件 / 文件夹，仅写 vault，不向量化） */
   const handleVaultImport = async (files) => {
@@ -448,10 +550,9 @@ export default function WorkspaceLibraryTree({ workspaceSlug }) {
               <button
                 type="button"
                 className="w-full flex items-center gap-2 px-3 py-2 text-xs text-theme-text-primary hover:bg-theme-file-picker-hover text-left"
-                onClick={() => {
-                  setShowCreateMenu(false);
-                  setShowCreateModal("file");
-                }}
+                onClick={() =>
+                  openCreate("file", parentFolderOf(selectedFile?.path))
+                }
               >
                 <File className="w-3.5 h-3.5" weight="fill" />
                 新建文档
@@ -459,10 +560,9 @@ export default function WorkspaceLibraryTree({ workspaceSlug }) {
               <button
                 type="button"
                 className="w-full flex items-center gap-2 px-3 py-2 text-xs text-theme-text-primary hover:bg-theme-file-picker-hover text-left"
-                onClick={() => {
-                  setShowCreateMenu(false);
-                  setShowCreateModal("folder");
-                }}
+                onClick={() =>
+                  openCreate("folder", parentFolderOf(selectedFile?.path))
+                }
               >
                 <FolderNotch className="w-3.5 h-3.5" weight="fill" />
                 新建文件夹
@@ -585,64 +685,59 @@ export default function WorkspaceLibraryTree({ workspaceSlug }) {
             onClick={() => setShowCreateModal(null)}
           >
             <div
-              className="bg-theme-bg-secondary border border-theme-modal-border rounded-2xl w-96 shadow-2xl p-5 relative z-[2001]"
+              className="bg-theme-bg-secondary border border-theme-modal-border rounded-2xl w-[20rem] shadow-2xl p-4 relative z-[2001]"
               onClick={(e) => e.stopPropagation()}
             >
-              <h3 className="text-theme-text-primary font-semibold text-sm mb-4">
+              <h3 className="text-theme-text-primary font-semibold text-sm mb-3">
                 {showCreateModal === "file" ? "新建文档" : "新建文件夹"}
               </h3>
-              <div className="mb-3">
-                <label className="block text-theme-text-secondary text-xs mb-1.5">
-                  {showCreateModal === "file"
-                    ? "文件名（自动添加 .md）"
-                    : "文件夹路径"}
-                </label>
-                <input
-                  autoFocus
-                  value={createInput.path}
-                  onChange={(e) =>
-                    setCreateInput((s) => ({ ...s, path: e.target.value }))
-                  }
-                  onKeyDown={(e) => e.key === "Enter" && handleCreate()}
-                  placeholder={
-                    showCreateModal === "file"
-                      ? createInput.path?.includes("/")
-                        ? "文档名"
-                        : "docs/我的文档"
-                      : "docs/子目录"
-                  }
-                  className="w-full px-3 py-2 bg-theme-settings-input-bg text-theme-text-primary rounded-lg border border-theme-modal-border text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                />
-              </div>
-              {showCreateModal === "file" && (
-                <div className="mb-4">
-                  <label className="block text-theme-text-secondary text-xs mb-1.5">
-                    初始内容（可选）
-                  </label>
-                  <textarea
-                    value={createInput.content}
+              <div className="mb-3 flex items-center gap-1.5">
+                <div className="w-[7.5rem] shrink-0">
+                  <FolderSelect
+                    value={createInput.folder}
+                    options={folderOptions}
+                    onChange={(folder) =>
+                      setCreateInput((s) => ({ ...s, folder }))
+                    }
+                  />
+                </div>
+                <div className="relative min-w-0 flex-1">
+                  <input
+                    autoFocus
+                    value={createInput.name}
                     onChange={(e) =>
                       setCreateInput((s) => ({
                         ...s,
-                        content: e.target.value,
+                        name: e.target.value.replace(/[\\/]/g, ""),
                       }))
                     }
-                    className="w-full h-28 px-3 py-2 bg-theme-settings-input-bg text-theme-text-primary rounded-lg border border-theme-modal-border text-sm resize-none focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono"
+                    onKeyDown={(e) => e.key === "Enter" && handleCreate()}
+                    placeholder={
+                      showCreateModal === "file" ? "文件名" : "文件夹名"
+                    }
+                    className={`w-full h-8 bg-theme-settings-input-bg text-theme-text-primary rounded-lg border border-theme-modal-border text-xs focus:outline-none focus:ring-1 focus:ring-theme-button-primary/50 focus:border-theme-button-primary/40 ${
+                      showCreateModal === "file" ? "pl-2.5 pr-9" : "px-2.5"
+                    }`}
                   />
+                  {showCreateModal === "file" ? (
+                    <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] text-theme-text-secondary">
+                      .md
+                    </span>
+                  ) : null}
                 </div>
-              )}
-              <div className="flex justify-end gap-2">
+              </div>
+              <div className="flex justify-end gap-1.5">
                 <button
                   type="button"
                   onClick={() => setShowCreateModal(null)}
-                  className="px-3 py-1.5 text-sm text-theme-text-secondary hover:text-theme-text-primary"
+                  className="h-8 px-2.5 rounded-lg text-xs text-theme-text-secondary hover:text-theme-text-primary hover:bg-theme-file-picker-hover transition-colors"
                 >
                   取消
                 </button>
                 <button
                   type="button"
                   onClick={handleCreate}
-                  className="px-3 py-1.5 text-sm text-white bg-theme-button-primary rounded-lg hover:opacity-90"
+                  className="h-8 px-3 rounded-lg text-xs font-medium text-white bg-theme-button-primary hover:opacity-90 transition-opacity"
                 >
                   创建
                 </button>

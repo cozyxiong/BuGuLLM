@@ -152,7 +152,7 @@ export default function LiveMarkdownEditor({
       icon: "material",
       value: initial,
       cache: { enable: false },
-      placeholder: "开始书写… 支持 Markdown 快捷语法，所见即所得",
+      placeholder: "开始记笔记...",
       toolbarConfig: {
         pin: true,
       },
