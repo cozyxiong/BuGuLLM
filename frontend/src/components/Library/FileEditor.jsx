@@ -1,23 +1,63 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import Library from "@/models/library";
 import {
   File,
-  FloppyDisk,
   CircleNotch,
   Image as ImageIcon,
   Article,
+  CaretDown,
 } from "@phosphor-icons/react";
 import LiveMarkdownEditor from "./LiveMarkdownEditor";
 import { useWorkspaceUI } from "@/components/WorkspaceUIContext";
 
+function recentKey(slug) {
+  return `bagu-recent-docs:${slug}`;
+}
+
+function readRecentFiles(slug) {
+  if (!slug) return [];
+  try {
+    const raw = window.sessionStorage.getItem(recentKey(slug));
+    const list = raw ? JSON.parse(raw) : [];
+    return Array.isArray(list) ? list : [];
+  } catch {
+    return [];
+  }
+}
+
+function rememberRecentFile(slug, file) {
+  if (!slug || !file?.path) return;
+  const entry = {
+    path: String(file.path).replace(/\\/g, "/"),
+    name: file.name || String(file.path).split("/").pop(),
+    extension: file.extension || "",
+  };
+  const next = [
+    entry,
+    ...readRecentFiles(slug).filter((item) => item.path !== entry.path),
+  ].slice(0, 8);
+  try {
+    window.sessionStorage.setItem(recentKey(slug), JSON.stringify(next));
+  } catch {
+    /* ignore */
+  }
+}
+
 export function FileEditor({ slug, file, onFileUpdate }) {
-  const { docHighlight } = useWorkspaceUI();
+  const { docHighlight, setSelectedFile } = useWorkspaceUI();
+  const [recentFiles, setRecentFiles] = useState([]);
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [dirty, setDirty] = useState(false);
   const [readError, setReadError] = useState(null);
+  const outlineSlotRef = useRef(null);
+  const restSlotRef = useRef(null);
+  const contentRef = useRef("");
+  const lastSavedRef = useRef("");
+  const dirtyRef = useRef(false);
+  contentRef.current = content;
+  dirtyRef.current = dirty;
 
   const filePathNorm = (file?.path || "").replace(/\\/g, "/");
   const hlPath = (docHighlight?.path || "").replace(/\\/g, "/");
@@ -56,39 +96,76 @@ export function FileEditor({ slug, file, onFileUpdate }) {
       const result = await Library.readFile(slug, file.path);
       if (result.file) {
         setContent(result.file.content);
+        lastSavedRef.current = result.file.content;
       } else {
         setReadError(result.error || "无法读取文件");
         setContent("");
+        lastSavedRef.current = "";
       }
       setLoading(false);
     }
     loadFile();
   }, [file, slug]);
 
-  const handleSave = useCallback(async () => {
-    if (!file || !dirty || readError) return;
-    setSaving(true);
-    setError(null);
-    const result = await Library.writeMarkdown(slug, file.path, content);
-    if (result.error) {
-      setError(result.error);
-    } else {
+  useEffect(() => {
+    if (!slug || !file?.path) return;
+    rememberRecentFile(slug, file);
+    const current = String(file.path).replace(/\\/g, "/");
+    setRecentFiles(
+      readRecentFiles(slug)
+        .filter((item) => item.path !== current)
+        .slice(0, 3)
+    );
+  }, [slug, file?.path, file?.name, file?.extension]);
+
+  const persist = useCallback(
+    async (workspaceSlug, path, text) => {
+      if (!workspaceSlug || !path || readError) return;
+      if (text === lastSavedRef.current) return;
+      const result = await Library.writeMarkdown(workspaceSlug, path, text);
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+      lastSavedRef.current = text;
       setDirty(false);
       onFileUpdate?.();
-    }
-    setSaving(false);
-  }, [file, slug, content, dirty, readError, onFileUpdate]);
+    },
+    [readError, onFileUpdate]
+  );
+
+  useEffect(() => {
+    if (!dirty || !isEditable || !file?.path || readError) return undefined;
+    const workspaceSlug = slug;
+    const path = file.path;
+    const timer = window.setTimeout(() => {
+      persist(workspaceSlug, path, contentRef.current);
+    }, 700);
+    return () => window.clearTimeout(timer);
+  }, [content, dirty, isEditable, file?.path, slug, readError, persist]);
+
+  useEffect(() => {
+    const workspaceSlug = slug;
+    const path = file?.path;
+    const editable = isEditable;
+    return () => {
+      if (!editable || !path || !dirtyRef.current) return;
+      const text = contentRef.current;
+      if (text === lastSavedRef.current) return;
+      Library.writeMarkdown(workspaceSlug, path, text);
+    };
+  }, [file?.path, slug, isEditable]);
 
   useEffect(() => {
     function handleKeyDown(e) {
       if ((e.ctrlKey || e.metaKey) && e.key === "s") {
         e.preventDefault();
-        if (dirty && isEditable) handleSave();
+        if (isEditable && file?.path) persist(slug, file.path, contentRef.current);
       }
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [dirty, isEditable, handleSave]);
+  }, [isEditable, file?.path, slug, persist]);
 
   const handleContentChange = useCallback((next) => {
     setContent((prev) => (prev === next ? prev : next));
@@ -201,44 +278,46 @@ export function FileEditor({ slug, file, onFileUpdate }) {
   // --- Editable Markdown：Typora 风格实时编辑 ---
   return (
     <div className="flex flex-col h-full bg-theme-bg-secondary">
-      <div className="flex items-center justify-between px-4 py-2 border-b border-theme-modal-border shrink-0">
-        <div className="flex items-center gap-2 min-w-0">
-          <Article
-            className="w-4 h-4 text-theme-text-secondary shrink-0"
-            weight="duotone"
-          />
-          <p className="text-theme-text-primary text-sm truncate">{file.name}</p>
-          {dirty && (
-            <span className="text-[10px] text-yellow-500 font-medium shrink-0">
-              未保存
-            </span>
-          )}
-        </div>
-
-        <div className="flex items-center gap-2">
-          <span className="hidden sm:inline text-[10px] text-theme-text-secondary">
-            Ctrl+S 保存
-          </span>
+      <div className="bagu-editor-topbar flex items-center px-2 h-11 border-b border-theme-modal-border shrink-0 min-w-0">
+        <div ref={outlineSlotRef} className="bagu-editor-topbar-outline shrink-0" />
+        <span className="bagu-editor-topbar-sep" />
+        <div className="relative group min-w-0 max-w-[40%]">
           <button
             type="button"
-            onClick={handleSave}
-            disabled={saving || !dirty}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg transition-all ${
-              dirty
-                ? "bg-theme-button-primary text-white hover:opacity-90"
-                : "bg-theme-settings-input-bg text-theme-text-secondary cursor-not-allowed"
-            }`}
+            className="flex items-center gap-1.5 min-w-0 max-w-full px-1.5 py-1 rounded-md hover:bg-white/5 light:hover:bg-black/5"
           >
-            {saving ? (
-              <CircleNotch className="w-3.5 h-3.5 animate-spin" />
-            ) : (
-              <FloppyDisk className="w-3.5 h-3.5" />
-            )}
-            <span className="hidden sm:inline">
-              {saving ? "保存中..." : dirty ? "保存" : "已保存"}
-            </span>
+            <Article
+              className="w-4 h-4 text-theme-text-secondary shrink-0"
+              weight="duotone"
+            />
+            <p className="text-theme-text-primary text-sm truncate">{file.name}</p>
+            <CaretDown
+              size={11}
+              className="text-theme-text-secondary shrink-0 opacity-60"
+            />
           </button>
+          {recentFiles.length > 0 && (
+            <div className="absolute left-0 top-full z-[60] pt-1.5 hidden group-hover:block group-focus-within:block">
+              <div className="bagu-recent-menu">
+                {recentFiles.map((item) => (
+                  <button
+                    key={item.path}
+                    type="button"
+                    className="bagu-recent-menu-item"
+                    onClick={() => setSelectedFile({ ...item, type: "file" })}
+                  >
+                    <span className="bagu-recent-menu-name">{item.name}</span>
+                    <span className="bagu-recent-menu-path">{item.path}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
+        <div
+          ref={restSlotRef}
+          className="bagu-editor-topbar-rest flex-1 min-w-0"
+        />
       </div>
 
       {(error || readError) && (
@@ -270,6 +349,8 @@ export function FileEditor({ slug, file, onFileUpdate }) {
             slug={slug}
             filePath={file.path}
             className="h-full"
+            outlineSlotRef={outlineSlotRef}
+            restSlotRef={restSlotRef}
             highlightQuote={hl?.quote || null}
             highlightToken={hl?.token || null}
           />

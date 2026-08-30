@@ -16,6 +16,57 @@ const Vditor = VditorImport?.default || VditorImport;
 
 const VDITOR_CDN = "https://cdn.jsdelivr.net/npm/vditor@3.10.9";
 
+function nearestScroller(node) {
+  let current = node?.parentElement;
+  while (current && current !== document.body) {
+    const style = window.getComputedStyle(current);
+    const canScroll =
+      /(auto|scroll|overlay)/.test(style.overflowY) ||
+      /(auto|scroll|overlay)/.test(style.overflow);
+    if (canScroll && current.scrollHeight > current.clientHeight + 4) {
+      return current;
+    }
+    current = current.parentElement;
+  }
+  return null;
+}
+
+function headingElements(contentRoot) {
+  if (!contentRoot) return [];
+  return Array.from(contentRoot.children).filter((el) =>
+    /^H[1-6]$/.test(el.tagName)
+  );
+}
+
+function syncOutlineActive(container) {
+  const outline = container?.querySelector(".vditor-outline");
+  if (!outline || outline.style.display === "none") return;
+  const contentRoot = getVditorContentRoot(container);
+  const scrollRoot = getVditorScrollRoot(container);
+  if (!contentRoot || !scrollRoot) return;
+  const headings = headingElements(contentRoot);
+  if (!headings.length) return;
+
+  const probe =
+    scrollRoot.getBoundingClientRect().top +
+    Math.min(120, Math.max(48, scrollRoot.clientHeight * 0.18));
+  let current = headings[0];
+  for (const heading of headings) {
+    if (heading.getBoundingClientRect().top <= probe) current = heading;
+    else break;
+  }
+  const id = current.id;
+  if (!id) return;
+
+  let active = null;
+  outline.querySelectorAll("span[data-target-id]").forEach((node) => {
+    const on = node.getAttribute("data-target-id") === id;
+    node.classList.toggle("bagu-toc-active", on);
+    if (on) active = node;
+  });
+  active?.scrollIntoView({ block: "nearest" });
+}
+
 /** 文档相对图片 → 可读的 API 绝对地址（编辑器内预览） */
 function toEditorMarkdown(content, slug, filePath) {
   if (!slug || !filePath || !content) return content || "";
@@ -95,6 +146,22 @@ function fromEditorMarkdown(content, slug, filePath) {
  * 整篇字符级所见即所得（Vditor WYSIWYG / IR）
  * 底层仍读写 Markdown，适合作为知识库核心编辑器。
  */
+function mountEditorToolbar(vditorRoot, outlineSlot, restSlot, onOutlineToggle) {
+  const toolbar = vditorRoot.querySelector(".vditor-toolbar");
+  if (!toolbar || !outlineSlot || !restSlot) return;
+  const outlineBtn = toolbar.querySelector('[data-type="outline"]');
+  const outlineItem = outlineBtn?.closest(".vditor-toolbar__item");
+  if (outlineItem) {
+    outlineSlot.replaceChildren(outlineItem);
+    if (onOutlineToggle) {
+      outlineItem.addEventListener("click", onOutlineToggle);
+    }
+  }
+  const first = toolbar.firstElementChild;
+  if (first?.classList.contains("vditor-toolbar__divider")) first.remove();
+  restSlot.replaceChildren(toolbar);
+}
+
 export default function LiveMarkdownEditor({
   value,
   onChange,
@@ -102,6 +169,8 @@ export default function LiveMarkdownEditor({
   filePath,
   readOnly = false,
   className = "",
+  outlineSlotRef = null,
+  restSlotRef = null,
   /** 临时来源高亮（不写回 Markdown） */
   highlightQuote = null,
   highlightToken = null,
@@ -133,11 +202,21 @@ export default function LiveMarkdownEditor({
     lastPushed.current = initial;
     lastStored.current = value || "";
 
+    let syncFrame = 0;
+    const scheduleOutlineSync = () => {
+      if (syncFrame) return;
+      syncFrame = window.requestAnimationFrame(() => {
+        syncFrame = 0;
+        if (!destroyed) syncOutlineActive(el);
+      });
+    };
+
     const emitIfChanged = (md) => {
       if (!readyRef.current) return;
       const { slug: s, filePath: p } = metaRef.current;
       const stored = fromEditorMarkdown(md, s, p);
       lastPushed.current = md;
+      scheduleOutlineSync();
       if (stored === lastStored.current) return;
       lastStored.current = stored;
       onChangeRef.current?.(stored);
@@ -158,8 +237,7 @@ export default function LiveMarkdownEditor({
         pin: true,
       },
       counter: {
-        enable: true,
-        type: "text",
+        enable: false,
       },
       preview: {
         theme: {
@@ -209,9 +287,16 @@ export default function LiveMarkdownEditor({
         if (title) title.textContent = "目录";
         const outlineBtn = el.querySelector('[data-type="outline"]');
         if (outlineBtn) outlineBtn.setAttribute("aria-label", "目录");
+        mountEditorToolbar(
+          el,
+          outlineSlotRef?.current,
+          restSlotRef?.current,
+          () => window.setTimeout(scheduleOutlineSync, 80)
+        );
         // 延后就绪，避免初始化 setValue 误触发 input 导致「未保存」
         requestAnimationFrame(() => {
           if (!destroyed) readyRef.current = true;
+          scheduleOutlineSync();
         });
         if (readOnly) {
           try {
@@ -227,9 +312,107 @@ export default function LiveMarkdownEditor({
 
     vditorRef.current = vditor;
 
+    let tipEl = null;
+    const hideOutlineTip = () => {
+      if (tipEl) tipEl.style.display = "none";
+    };
+    const showOutlineTip = (hit) => {
+      const label =
+        hit.querySelector(":scope > span") || hit;
+      if (label.scrollWidth <= label.clientWidth + 1) {
+        hideOutlineTip();
+        return;
+      }
+      if (!tipEl) {
+        tipEl = document.createElement("div");
+        tipEl.className = "bagu-toc-tip";
+        document.body.appendChild(tipEl);
+      }
+      tipEl.textContent = (label.textContent || "").replace(/\s+/g, " ").trim();
+      tipEl.style.display = "block";
+      const rect = hit.getBoundingClientRect();
+      const tipW = tipEl.offsetWidth;
+      const tipH = tipEl.offsetHeight;
+      let left = rect.right + 10;
+      if (left + tipW > window.innerWidth - 8) {
+        left = Math.max(8, rect.left - tipW - 10);
+      }
+      let top = rect.top + rect.height / 2 - tipH / 2;
+      top = Math.min(window.innerHeight - tipH - 8, Math.max(8, top));
+      tipEl.style.left = `${left}px`;
+      tipEl.style.top = `${top}px`;
+    };
+
+    const onOutlineOver = (e) => {
+      const outline = el.querySelector(".vditor-outline");
+      if (!outline || !outline.contains(e.target)) return;
+      const hit = e.target.closest?.("span[data-target-id]");
+      outline.querySelectorAll(".bagu-toc-hot").forEach((n) => {
+        if (n !== hit) n.classList.remove("bagu-toc-hot");
+      });
+      if (hit && outline.contains(hit)) {
+        hit.classList.add("bagu-toc-hot");
+        showOutlineTip(hit);
+      } else {
+        hideOutlineTip();
+      }
+    };
+    const onOutlineOut = (e) => {
+      const outline = el.querySelector(".vditor-outline");
+      if (!outline) return;
+      if (e.relatedTarget && outline.contains(e.relatedTarget)) return;
+      outline.querySelectorAll(".bagu-toc-hot").forEach((n) =>
+        n.classList.remove("bagu-toc-hot")
+      );
+      hideOutlineTip();
+    };
+    const onOutlineClick = (e) => {
+      if (e.target?.closest?.(".vditor-outline__action")) {
+        window.setTimeout(scheduleOutlineSync, 80);
+        return;
+      }
+      const outline = el.querySelector(".vditor-outline");
+      const hit = e.target?.closest?.("span[data-target-id]");
+      if (!hit || !outline?.contains(hit)) {
+        if (e.target?.closest?.('[data-type="outline"]')) {
+          window.setTimeout(scheduleOutlineSync, 80);
+        }
+        return;
+      }
+      e.preventDefault();
+      e.stopPropagation();
+      const heading = document.getElementById(hit.getAttribute("data-target-id"));
+      if (!heading) return;
+      const scroller =
+        nearestScroller(heading) ||
+        getVditorScrollRoot(el) ||
+        el.querySelector(".vditor-wysiwyg");
+      if (!scroller) return;
+      const gap = 80;
+      const nextTop =
+        heading.getBoundingClientRect().top -
+        scroller.getBoundingClientRect().top +
+        scroller.scrollTop -
+        gap;
+      scroller.scrollTo({ top: Math.max(0, nextTop) });
+      scheduleOutlineSync();
+    };
+    el.addEventListener("pointerover", onOutlineOver);
+    el.addEventListener("pointerout", onOutlineOut);
+    el.addEventListener("scroll", scheduleOutlineSync, true);
+    el.addEventListener("click", onOutlineClick, true);
+
     return () => {
       destroyed = true;
       readyRef.current = false;
+      if (syncFrame) window.cancelAnimationFrame(syncFrame);
+      el.removeEventListener("pointerover", onOutlineOver);
+      el.removeEventListener("pointerout", onOutlineOut);
+      el.removeEventListener("scroll", scheduleOutlineSync, true);
+      el.removeEventListener("click", onOutlineClick, true);
+      hideOutlineTip();
+      tipEl?.remove();
+      tipEl = null;
       try {
         vditor.destroy();
       } catch {
