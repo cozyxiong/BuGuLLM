@@ -10,6 +10,7 @@ import {
   getVditorScrollRoot,
   getVditorContentRoot,
 } from "@/utils/tempTextHighlight";
+import BlockHandleLayer from "./BlockHandleLayer";
 
 const Vditor = VditorImport?.default || VditorImport;
 
@@ -175,40 +176,27 @@ export default function LiveMarkdownEditor({
       toolbar: readOnly
         ? []
         : [
-            "headings",
-            "bold",
-            "italic",
-            "strike",
+            { name: "outline", tip: "目录" },
             "|",
-            "list",
             "ordered-list",
+            "list",
             "check",
-            "outdent",
-            "indent",
             "|",
-            "quote",
-            "line",
+            "table",
             "code",
             "inline-code",
-            "|",
+            "line",
+            "quote",
             "link",
-            "table",
-            "|",
-            "undo",
-            "redo",
             "|",
             "fullscreen",
-            "outline",
-            "edit-mode",
-            {
-              name: "more",
-              toolbar: ["both", "preview", "export"],
-            },
+            "preview",
+            "export",
           ],
       typewriterMode: true,
       outline: {
         enable: false,
-        position: "right",
+        position: "left",
       },
       after: () => {
         if (destroyed) return;
@@ -217,6 +205,10 @@ export default function LiveMarkdownEditor({
         } catch {
           /* ignore */
         }
+        const title = el.querySelector(".vditor-outline__title");
+        if (title) title.textContent = "目录";
+        const outlineBtn = el.querySelector('[data-type="outline"]');
+        if (outlineBtn) outlineBtn.setAttribute("aria-label", "目录");
         // 延后就绪，避免初始化 setValue 误触发 input 导致「未保存」
         requestAnimationFrame(() => {
           if (!destroyed) readyRef.current = true;
@@ -347,6 +339,11 @@ export default function LiveMarkdownEditor({
   return (
     <div className={`bagu-vditor-wrap ${className}`}>
       <div ref={containerRef} className="bagu-vditor" />
+      <BlockHandleLayer
+        containerRef={containerRef}
+        vditorRef={vditorRef}
+        enabled={!readOnly}
+      />
     </div>
   );
 }

@@ -1303,6 +1303,7 @@ dialog::backdrop {
   min-height: 0;
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 
 .bagu-vditor-wrap .bagu-vditor {
@@ -1376,7 +1377,7 @@ dialog::backdrop {
   line-height: 1.75 !important;
   max-width: 48rem;
   margin: 0 auto !important;
-  padding: 1.75rem 2rem 4rem !important;
+  padding: 1.75rem 2rem 4rem 3.25rem !important;
 }
 
 .bagu-vditor-wrap .vditor-reset h1,
@@ -1389,14 +1390,26 @@ dialog::backdrop {
 
 .bagu-vditor-wrap .vditor-reset h1 {
   font-size: 2rem !important;
-  border-bottom: 1px solid var(--theme-modal-border);
-  padding-bottom: 0.4rem;
 }
 
 .bagu-vditor-wrap .vditor-reset h2 {
   font-size: 1.5rem !important;
-  border-bottom: 1px solid var(--theme-modal-border);
-  padding-bottom: 0.3rem;
+}
+
+.bagu-vditor-wrap .vditor-wysiwyg > .vditor-reset > h1:before,
+.bagu-vditor-wrap .vditor-wysiwyg > .vditor-reset > h2:before,
+.bagu-vditor-wrap .vditor-wysiwyg > .vditor-reset > h3:before,
+.bagu-vditor-wrap .vditor-wysiwyg > .vditor-reset > h4:before,
+.bagu-vditor-wrap .vditor-wysiwyg > .vditor-reset > h5:before,
+.bagu-vditor-wrap .vditor-wysiwyg > .vditor-reset > h6:before,
+.bagu-vditor-wrap .vditor-ir .vditor-reset > h1:before,
+.bagu-vditor-wrap .vditor-ir .vditor-reset > h2:before,
+.bagu-vditor-wrap .vditor-ir .vditor-reset > h3:before,
+.bagu-vditor-wrap .vditor-ir .vditor-reset > h4:before,
+.bagu-vditor-wrap .vditor-ir .vditor-reset > h5:before,
+.bagu-vditor-wrap .vditor-ir .vditor-reset > h6:before {
+  display: none !important;
+  content: none !important;
 }
 
 .bagu-vditor-wrap .vditor-reset a {
@@ -1437,6 +1450,122 @@ dialog::backdrop {
   visibility: hidden !important;
   opacity: 0 !important;
   pointer-events: none !important;
+}
+
+.bagu-block-handle {
+  position: absolute;
+  z-index: 24;
+  width: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  padding: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--theme-text-secondary);
+  cursor: grab;
+}
+.bagu-block-handle:hover {
+  background: var(--theme-settings-input-bg);
+  color: var(--theme-text-primary);
+}
+.bagu-block-handle:active {
+  cursor: grabbing;
+}
+
+.bagu-block-drop {
+  position: absolute;
+  z-index: 23;
+  display: flex;
+  align-items: center;
+  height: 2px;
+  pointer-events: none;
+}
+.bagu-block-drop-dot {
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: var(--file-drop-line);
+  box-shadow:
+    0 0 0 2px var(--file-drop-dot-ring),
+    0 1px 3px rgba(0, 0, 0, 0.25);
+}
+.bagu-block-drop-line {
+  flex: 1;
+  min-width: 0;
+  height: 2px;
+  margin-left: 6px;
+  border-radius: 9999px;
+  background: linear-gradient(
+    90deg,
+    var(--file-drop-line) 0%,
+    var(--file-drop-line-fade) 55%,
+    transparent 100%
+  );
+}
+
+.bagu-block-dragging {
+  opacity: 0.35;
+}
+
+.bagu-block-menu {
+  position: fixed;
+  z-index: 80;
+  width: 280px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #27272a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.38);
+  color: #e4e4e7;
+}
+.light .bagu-block-menu,
+[data-theme="light"] .bagu-block-menu {
+  background: #fff;
+  border-color: #e2e8f0;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.12);
+  color: #0f172a;
+}
+
+.bagu-block-menu-icon {
+  height: 36px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.bagu-block-menu-icon:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+.light .bagu-block-menu-icon:hover,
+[data-theme="light"] .bagu-block-menu-icon:hover {
+  background: #f1f5f9;
+}
+
+.bagu-block-menu-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 13px;
+  text-align: left;
+}
+.bagu-block-menu-row:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+.light .bagu-block-menu-row:hover,
+[data-theme="light"] .bagu-block-menu-row:hover {
+  background: #f1f5f9;
 }
 
 [data-theme="light"] .markdown-preview table td {
