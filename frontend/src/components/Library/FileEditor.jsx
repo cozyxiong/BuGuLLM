@@ -278,10 +278,11 @@ export function FileEditor({ slug, file, onFileUpdate }) {
   // --- Editable Markdown：Typora 风格实时编辑 ---
   return (
     <div className="flex flex-col h-full bg-theme-bg-secondary">
-      <div className="bagu-editor-topbar flex items-center px-2 h-11 border-b border-theme-modal-border shrink-0 min-w-0">
+      <div className="bagu-editor-topbar flex items-center px-2 h-11 border-b border-theme-modal-border shrink-0 min-w-0 overflow-visible">
+        <div className="flex items-center min-w-0 flex-1">
         <div ref={outlineSlotRef} className="bagu-editor-topbar-outline shrink-0" />
         <span className="bagu-editor-topbar-sep" />
-        <div className="relative group min-w-0 max-w-[40%]">
+        <div className="relative group min-w-0 max-w-[70%]">
           <button
             type="button"
             className="flex items-center gap-1.5 min-w-0 max-w-full px-1.5 py-1 rounded-md hover:bg-white/5 light:hover:bg-black/5"
@@ -314,10 +315,12 @@ export function FileEditor({ slug, file, onFileUpdate }) {
             </div>
           )}
         </div>
+        </div>
         <div
           ref={restSlotRef}
-          className="bagu-editor-topbar-rest flex-1 min-w-0"
+          className="bagu-editor-topbar-rest shrink-0"
         />
+        <div className="flex-1 min-w-0" aria-hidden="true" />
       </div>
 
       {(error || readError) && (

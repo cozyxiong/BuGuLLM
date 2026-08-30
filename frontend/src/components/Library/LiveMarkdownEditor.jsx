@@ -146,20 +146,48 @@ function fromEditorMarkdown(content, slug, filePath) {
  * 整篇字符级所见即所得（Vditor WYSIWYG / IR）
  * 底层仍读写 Markdown，适合作为知识库核心编辑器。
  */
+function takeOutlineItem(root) {
+  const btn = root?.querySelector?.('[data-type="outline"]');
+  return btn?.closest(".vditor-toolbar__item") || null;
+}
+
 function mountEditorToolbar(vditorRoot, outlineSlot, restSlot, onOutlineToggle) {
-  const toolbar = vditorRoot.querySelector(".vditor-toolbar");
+  const toolbar =
+    vditorRoot.querySelector(".vditor-toolbar") ||
+    restSlot.querySelector(".vditor-toolbar");
   if (!toolbar || !outlineSlot || !restSlot) return;
-  const outlineBtn = toolbar.querySelector('[data-type="outline"]');
-  const outlineItem = outlineBtn?.closest(".vditor-toolbar__item");
+  const outlineItem = takeOutlineItem(toolbar) || takeOutlineItem(outlineSlot);
   if (outlineItem) {
     outlineSlot.replaceChildren(outlineItem);
     if (onOutlineToggle) {
       outlineItem.addEventListener("click", onOutlineToggle);
     }
   }
+  restSlot.querySelectorAll('[data-type="outline"]').forEach((btn) => {
+    btn.closest(".vditor-toolbar__item")?.remove();
+  });
   const first = toolbar.firstElementChild;
   if (first?.classList.contains("vditor-toolbar__divider")) first.remove();
   restSlot.replaceChildren(toolbar);
+  restSlot.querySelectorAll('[data-type="outline"]').forEach((btn) => {
+    btn.closest(".vditor-toolbar__item")?.remove();
+  });
+  const remapTipDir = (root) => {
+    root.querySelectorAll(".vditor-tooltipped__n").forEach((node) => {
+      node.classList.remove("vditor-tooltipped__n");
+      node.classList.add("vditor-tooltipped__s");
+    });
+    root.querySelectorAll(".vditor-tooltipped__ne").forEach((node) => {
+      node.classList.remove("vditor-tooltipped__ne");
+      node.classList.add("vditor-tooltipped__se");
+    });
+    root.querySelectorAll(".vditor-tooltipped__nw").forEach((node) => {
+      node.classList.remove("vditor-tooltipped__nw");
+      node.classList.add("vditor-tooltipped__sw");
+    });
+  };
+  remapTipDir(outlineSlot);
+  remapTipDir(toolbar);
 }
 
 export default function LiveMarkdownEditor({
@@ -413,6 +441,8 @@ export default function LiveMarkdownEditor({
       hideOutlineTip();
       tipEl?.remove();
       tipEl = null;
+      outlineSlotRef?.current?.replaceChildren();
+      restSlotRef?.current?.replaceChildren();
       try {
         vditor.destroy();
       } catch {
