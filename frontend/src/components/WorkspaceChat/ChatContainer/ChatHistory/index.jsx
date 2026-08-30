@@ -224,10 +224,10 @@ export default forwardRef(function (
         <div
           className={`markdown text-white/80 light:text-theme-text-primary font-light ${textSizeClass} overflow-y-scroll flex flex-col items-center justify-start ${
             docked
-              ? "h-full pt-14 px-1 pb-4"
+              ? "h-full pt-14 px-1"
               : chatMode === "full"
-                ? "h-full pt-14 pb-[100px] md:pb-20"
-                : "h-full md:h-[83%] pb-[100px] pt-6 md:pt-0 md:pb-20 md:mx-0"
+                ? "h-full pt-14"
+                : "h-full md:h-[83%] pt-6 md:pt-0 md:mx-0"
           } ${showScrollbar ? "show-scrollbar" : "no-scroll"}`}
           id="chat-history"
           ref={chatHistoryRef}
@@ -240,6 +240,13 @@ export default forwardRef(function (
               Array.isArray(item) ? renderStatusResponse(item, index) : item
             )}
           </div>
+          <div
+            id="chat-history-spacer"
+            aria-hidden
+            className={`w-full shrink-0 pointer-events-none ${
+              docked ? "h-40" : "h-[100px] md:h-20"
+            }`}
+          />
         </div>
         {!isAtBottom && (
           <div
@@ -421,6 +428,7 @@ function buildMessages({
           saveEditedMessage={saveEditedMessage}
           forkThread={forkThread}
           metrics={props.metrics}
+          sentAt={props.sentAt}
           outputs={props.outputs}
           clarifyingQuestions={props.clarifyingQuestions}
           supplement={props.supplement}

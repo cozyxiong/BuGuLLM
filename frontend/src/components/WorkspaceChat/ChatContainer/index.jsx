@@ -62,21 +62,30 @@ export default function ChatContainer({
     chatHistory.length === 0 && !sessionStorage.getItem(PENDING_HOME_MESSAGE);
 
   /**
-   * Keep chat history bottom-padding in sync with the prompt input's
-   * actual rendered height so expanding input never covers messages.
+   * Keep a spacer at the end of chat history in sync with the prompt input
+   * height. Padding-bottom on a flex scroll container is ignored in some
+   * browsers, so the last message would sit under the overlay input.
    */
   useEffect(() => {
     if (isEmpty) return;
     const wrapper = document.getElementById("prompt-input-wrapper");
-    const chatEl = document.getElementById("chat-history");
-    if (!wrapper || !chatEl) return;
+    if (!wrapper) return;
 
-    const observer = new ResizeObserver(([entry]) => {
-      const inputHeight =
-        entry.borderBoxSize?.[0]?.blockSize ?? entry.target.offsetHeight;
-      chatEl.style.paddingBottom = `${Math.ceil(inputHeight) + 8}px`;
-    });
+    const apply = () => {
+      const spacer = document.getElementById("chat-history-spacer");
+      const chatEl = document.getElementById("chat-history");
+      if (!spacer) return;
+      const inputHeight = Math.ceil(wrapper.offsetHeight) + 8;
+      spacer.style.height = `${inputHeight}px`;
+      if (!chatEl) return;
+      const nearBottom =
+        chatEl.scrollHeight - chatEl.scrollTop - chatEl.clientHeight < 96;
+      if (nearBottom) chatEl.scrollTop = chatEl.scrollHeight;
+    };
+
+    const observer = new ResizeObserver(apply);
     observer.observe(wrapper);
+    apply();
     return () => observer.disconnect();
   }, [isEmpty]);
 

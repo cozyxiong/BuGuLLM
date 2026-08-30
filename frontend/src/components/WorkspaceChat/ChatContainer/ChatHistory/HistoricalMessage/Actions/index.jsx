@@ -19,6 +19,7 @@ const Actions = ({
   isEditing,
   role,
   metrics = {},
+  sentAt = null,
 }) => {
   const { t } = useTranslation();
   const [selectedFeedback, setSelectedFeedback] = useState(feedbackScore);
@@ -70,7 +71,9 @@ const Actions = ({
           role={role}
         />
       </div>
-      <RenderMetrics metrics={metrics} />
+      {role !== "user" ? (
+        <RenderMetrics metrics={metrics} sentAt={sentAt} />
+      ) : null}
     </div>
   );
 };

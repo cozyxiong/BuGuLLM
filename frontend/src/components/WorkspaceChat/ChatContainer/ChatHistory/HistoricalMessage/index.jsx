@@ -37,6 +37,7 @@ const HistoricalMessage = ({
   saveEditedMessage,
   forkThread,
   metrics = {},
+  sentAt = null,
   outputs = [],
   clarifyingQuestions = [],
   supplement = null,
@@ -128,6 +129,7 @@ const HistoricalMessage = ({
               role={role}
               forkThread={forkThread}
               metrics={metrics}
+              sentAt={sentAt}
             />
           </div>
         </div>
@@ -198,6 +200,7 @@ const HistoricalMessage = ({
             role={role}
             forkThread={forkThread}
             metrics={metrics}
+            sentAt={sentAt}
           />
         </div>
         {supplement && (
