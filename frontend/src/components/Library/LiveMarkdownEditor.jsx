@@ -11,6 +11,7 @@ import {
   getVditorContentRoot,
 } from "@/utils/tempTextHighlight";
 import BlockHandleLayer from "./BlockHandleLayer";
+import SelectionToolbar from "./SelectionToolbar";
 
 const Vditor = VditorImport?.default || VditorImport;
 
@@ -584,6 +585,11 @@ export default function LiveMarkdownEditor({
     <div className={`bagu-vditor-wrap ${className}`}>
       <div ref={containerRef} className="bagu-vditor" />
       <BlockHandleLayer
+        containerRef={containerRef}
+        vditorRef={vditorRef}
+        enabled={!readOnly}
+      />
+      <SelectionToolbar
         containerRef={containerRef}
         vditorRef={vditorRef}
         enabled={!readOnly}

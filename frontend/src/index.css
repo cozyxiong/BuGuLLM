@@ -1953,6 +1953,305 @@ dialog::backdrop {
   background: #f1f5f9;
 }
 
+.bagu-sel-toolbar {
+  position: fixed;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 6px;
+  border-radius: 10px;
+  background: #2a2b2e;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.38);
+  color: #e4e4e7;
+}
+.light .bagu-sel-toolbar,
+[data-theme="light"] .bagu-sel-toolbar {
+  background: #fff;
+  border-color: #e2e8f0;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.12);
+  color: #0f172a;
+}
+.bagu-sel-ask {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 7px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.bagu-sel-ask:hover,
+.bagu-sel-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+.light .bagu-sel-ask:hover,
+.light .bagu-sel-btn:hover,
+[data-theme="light"] .bagu-sel-ask:hover,
+[data-theme="light"] .bagu-sel-btn:hover {
+  background: #f1f5f9;
+}
+.bagu-sel-sep {
+  width: 1px;
+  height: 16px;
+  margin: 0 4px;
+  background: currentColor;
+  opacity: 0.2;
+}
+.bagu-sel-btn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  border-radius: 7px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.bagu-sel-btn.is-on {
+  background: rgba(255, 255, 255, 0.12);
+}
+.light .bagu-sel-btn.is-on,
+[data-theme="light"] .bagu-sel-btn.is-on {
+  background: #e2e8f0;
+}
+.bagu-sel-color-btn {
+  width: auto;
+  padding: 0 6px;
+  gap: 2px;
+}
+.bagu-sel-letter {
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+}
+.bagu-sel-link,
+.bagu-sel-palette {
+  position: absolute;
+  left: 0;
+  z-index: 91;
+  border-radius: 12px;
+  background: #2a2b2e;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+  color: #e4e4e7;
+}
+.bagu-sel-toolbar--pop-up .bagu-sel-link,
+.bagu-sel-toolbar--pop-up .bagu-sel-palette {
+  top: auto;
+  bottom: calc(100% + 6px);
+}
+.bagu-sel-toolbar--pop-down .bagu-sel-link,
+.bagu-sel-toolbar--pop-down .bagu-sel-palette {
+  top: calc(100% + 6px);
+  bottom: auto;
+}
+.light .bagu-sel-link,
+.light .bagu-sel-palette,
+[data-theme="light"] .bagu-sel-link,
+[data-theme="light"] .bagu-sel-palette {
+  background: #fff;
+  border-color: #e2e8f0;
+  color: #0f172a;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12);
+}
+.bagu-sel-link {
+  display: flex;
+  gap: 6px;
+  padding: 8px;
+  min-width: 260px;
+}
+.bagu-sel-link input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: transparent;
+  color: inherit;
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 13px;
+  outline: none;
+}
+.bagu-sel-link button {
+  border: none;
+  border-radius: 8px;
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.1);
+  color: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.bagu-sel-palette {
+  width: auto;
+  padding: 8px 10px;
+  right: 0;
+  left: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.bagu-sel-palette-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.bagu-sel-palette-line > span {
+  flex-shrink: 0;
+  width: 28px;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  opacity: 0.55;
+}
+.bagu-sel-dots {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.bagu-sel-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+}
+.bagu-sel-dot:hover {
+  transform: scale(1.08);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.18);
+}
+.light .bagu-sel-dot,
+[data-theme="light"] .bagu-sel-dot {
+  border-color: rgba(15, 23, 42, 0.12);
+}
+.light .bagu-sel-dot:hover,
+[data-theme="light"] .bagu-sel-dot:hover {
+  box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.12);
+}
+.bagu-sel-dot-letter {
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  color: inherit;
+  background: rgba(255, 255, 255, 0.06);
+  text-align: center;
+}
+.bagu-sel-dot-letter.is-default {
+  color: inherit;
+}
+.bagu-sel-dot-glyph {
+  display: block;
+  line-height: 1;
+  transform: translateY(0.4px);
+}
+.bagu-sel-dot.is-none {
+  position: relative;
+  background: transparent;
+  overflow: hidden;
+}
+.bagu-sel-dot.is-none::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 1px;
+  height: 16px;
+  background: #a1a1aa;
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+.bagu-sel-pin {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 8px 6px 8px 4px;
+  border-radius: 0;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  color: #d4d4d8;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.light .bagu-sel-pin,
+[data-theme="light"] .bagu-sel-pin {
+  background: transparent;
+  border-bottom-color: rgba(15, 23, 42, 0.1);
+  color: #27272a;
+}
+.bagu-sel-pin-icon {
+  flex-shrink: 0;
+  width: auto;
+  height: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #a1a1aa;
+  background: none;
+  border-radius: 0;
+}
+.light .bagu-sel-pin-icon,
+[data-theme="light"] .bagu-sel-pin-icon {
+  color: #52525b;
+  background: none;
+}
+.bagu-sel-pin-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #fafafa;
+  font-weight: 450;
+}
+.light .bagu-sel-pin-text,
+[data-theme="light"] .bagu-sel-pin-text {
+  color: #18181b;
+}
+.bagu-sel-pin-x {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 9999px;
+  background: transparent;
+  color: inherit;
+  opacity: 0.55;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.bagu-sel-pin-x:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.bagu-vditor-wrap .vditor-reset u {
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+.bagu-vditor-wrap ::selection,
+.bagu-vditor-wrap *::selection {
+  background: rgba(125, 180, 255, 0.32);
+  color: inherit;
+}
+
 [data-theme="light"] .markdown-preview table td {
   color: #333;
 }

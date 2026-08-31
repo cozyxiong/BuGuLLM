@@ -81,12 +81,23 @@ export default function FloatingChat() {
     await restoreThreadRoute(pendingMessage);
   };
 
+  const prevChatMode = useRef(chatMode);
   useEffect(() => {
     if (chatMode === "compose") {
-      const t = setTimeout(() => inputRef.current?.focus(), 220);
+      const t = setTimeout(() => {
+        const sel = window.getSelection();
+        if (sel && !sel.isCollapsed) return;
+        inputRef.current?.focus();
+      }, 220);
+      if (prevChatMode.current !== "compose" && !overlay) {
+        restoreThreadRoute();
+      }
+      prevChatMode.current = chatMode;
       return () => clearTimeout(t);
     }
-  }, [chatMode]);
+    prevChatMode.current = chatMode;
+    return undefined;
+  }, [chatMode, overlay]);
 
   useEffect(() => {
     if (chatMode !== "compose") return;

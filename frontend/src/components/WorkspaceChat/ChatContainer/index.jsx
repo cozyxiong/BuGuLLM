@@ -33,7 +33,10 @@ import QuickActions from "@/components/lib/QuickActions";
 import ChatSettingsMenu from "./ChatSettingsMenu";
 import WorkspaceModelPicker from "./WorkspaceModelPicker";
 import { ChatSidebarProvider } from "./ChatSidebar";
-import { useWorkspaceUI } from "@/components/WorkspaceUIContext";
+import {
+  useWorkspaceUI,
+  formatSelectionPin,
+} from "@/components/WorkspaceUIContext";
 import SourcesSidebar from "./SourcesSidebar";
 import MemoriesSidebar from "./MemoriesSidebar";
 
@@ -46,8 +49,10 @@ export default function ChatContainer({
 }) {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { chatMode } = useWorkspaceUI();
+  const { chatMode, selectionPin, clearSelectionPin } = useWorkspaceUI();
   const docked = chatMode === "compose";
+  const selectionPinRef = useRef(selectionPin);
+  selectionPinRef.current = selectionPin;
   const [loadingResponse, setLoadingResponse] = useState(false);
   const [chatHistory, setChatHistory] = useState(knownHistory);
   const [socketId, setSocketId] = useState(null);
@@ -109,9 +114,11 @@ export default function ChatContainer({
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    const currentMessage =
-      document.getElementById(PROMPT_INPUT_ID)?.value || "";
-    if (!currentMessage) return false;
+    const { visible, prompt } = formatSelectionPin(
+      document.getElementById(PROMPT_INPUT_ID)?.value || "",
+      selectionPinRef.current
+    );
+    if (!prompt) return false;
 
     // Clear the localStorage draft for this thread/workspace so that if the
     // PromptInput remounts (empty→chat transition), it won't restore stale text
@@ -125,11 +132,13 @@ export default function ChatContainer({
         sessionStorage.setItem(
           PENDING_HOME_MESSAGE,
           JSON.stringify({
-            message: currentMessage,
+            message: prompt,
+            display: visible,
             attachments: parseAttachments(),
           })
         );
         navigate(paths.workspace.thread(workspace.slug, thread.slug));
+        clearSelectionPin();
         return;
       }
     }
@@ -137,15 +146,16 @@ export default function ChatContainer({
     const prevChatHistory = [
       ...chatHistory,
       {
-        content: currentMessage,
+        content: visible,
         role: "user",
         attachments: parseAttachments(),
+        llmPrompt: prompt,
       },
       {
         content: "",
         role: "assistant",
         pending: true,
-        userMessage: currentMessage,
+        userMessage: prompt,
         animate: true,
       },
     ];
@@ -156,6 +166,7 @@ export default function ChatContainer({
     setChatHistory(prevChatHistory);
     setMessageEmit("");
     setLoadingResponse(true);
+    clearSelectionPin();
   };
 
   function endSTTSession() {
@@ -177,6 +188,7 @@ export default function ChatContainer({
    */
   const sendCommand = async ({
     text = "",
+    displayText = "",
     autoSubmit = false,
     history = [],
     attachments = [],
@@ -202,7 +214,14 @@ export default function ChatContainer({
       text = currentText + text;
     }
 
-    if (!text || text === "") return false;
+    let visible = displayText;
+    let prompt = text;
+    if (!displayText) {
+      const formatted = formatSelectionPin(text, selectionPinRef.current);
+      visible = formatted.visible;
+      prompt = formatted.prompt;
+    }
+    if (!prompt) return false;
 
     // If on a bare workspace route with no thread and no chat yet, create a
     // virtual thread and navigate — same as handleSubmit does.
@@ -211,9 +230,14 @@ export default function ChatContainer({
       if (thread) {
         sessionStorage.setItem(
           PENDING_HOME_MESSAGE,
-          JSON.stringify({ message: text, attachments })
+          JSON.stringify({
+            message: prompt,
+            display: visible,
+            attachments,
+          })
         );
         navigate(paths.workspace.thread(workspace.slug, thread.slug));
+        clearSelectionPin();
         return;
       }
     }
@@ -234,7 +258,7 @@ export default function ChatContainer({
           content: "",
           role: "assistant",
           pending: true,
-          userMessage: text,
+          userMessage: prompt,
           attachments,
           animate: true,
         },
@@ -243,15 +267,16 @@ export default function ChatContainer({
       prevChatHistory = [
         ...chatHistory,
         {
-          content: text,
+          content: visible,
           role: "user",
           attachments,
+          llmPrompt: prompt,
         },
         {
           content: "",
           role: "assistant",
           pending: true,
-          userMessage: text,
+          userMessage: prompt,
           attachments,
           animate: true,
         },
@@ -261,6 +286,7 @@ export default function ChatContainer({
     setChatHistory(prevChatHistory);
     setMessageEmit("");
     setLoadingResponse(true);
+    clearSelectionPin();
   };
 
   sendCommandRef.current = sendCommand;
@@ -276,7 +302,8 @@ export default function ChatContainer({
       Workspace.deleteChats(workspace.slug, [chatId])
         .then(() =>
           sendCommandRef.current({
-            text: lastUserMessage.content,
+            text: lastUserMessage.llmPrompt || lastUserMessage.content,
+            displayText: lastUserMessage.content,
             autoSubmit: true,
             history: filteredHistory,
             attachments: lastUserMessage?.attachments,
@@ -297,6 +324,7 @@ export default function ChatContainer({
         sessionStorage.removeItem(PENDING_HOME_MESSAGE);
         sendCommand({
           text: pending.message,
+          displayText: pending.display || "",
           attachments: pending.attachments || [],
           autoSubmit: true,
         });

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { createPortal } from "react-dom";
 import debounce from "lodash.debounce";
-import { ArrowUp, CaretDown, Check } from "@phosphor-icons/react";
+import { ArrowUp, CaretDown, Check, Quotes, X } from "@phosphor-icons/react";
 import StopGenerationButton from "./StopGenerationButton";
 import SpeechToText from "./SpeechToText";
 import { Tooltip } from "react-tooltip";
@@ -52,7 +52,7 @@ export default function PromptInput({
 }) {
   const { t } = useTranslation();
   const { isDisabled } = useIsDisabled();
-  const { chatMode } = useWorkspaceUI();
+  const { chatMode, selectionPin, clearSelectionPin } = useWorkspaceUI();
   const docked = chatMode === "compose";
   const [promptInput, setPromptInput] = useState("");
   const [showTools, setShowTools] = useState(false);
@@ -93,7 +93,10 @@ export default function PromptInput({
   }, []);
 
   useEffect(() => {
-    if (!isStreaming && textareaRef.current) textareaRef.current.focus();
+    if (!isStreaming && textareaRef.current) {
+      const sel = window.getSelection();
+      if (!sel || sel.isCollapsed) textareaRef.current.focus();
+    }
     resetTextAreaHeight();
   }, [isStreaming]);
 
@@ -345,6 +348,22 @@ export default function PromptInput({
               centered={centered}
               highlightedIndexRef={toolsHighlightRef}
             />
+            {selectionPin?.text ? (
+              <div className="bagu-sel-pin">
+                <span className="bagu-sel-pin-icon" aria-hidden>
+                  <Quotes size={13} weight="fill" />
+                </span>
+                <span className="bagu-sel-pin-text">{selectionPin.text}</span>
+                <button
+                  type="button"
+                  className="bagu-sel-pin-x"
+                  aria-label="取消选中"
+                  onClick={clearSelectionPin}
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            ) : null}
             <div
               className={[
                 "rounded-[22px] pwa:rounded-3xl flex flex-col px-4 sm:px-5 overflow-hidden",
@@ -365,7 +384,7 @@ export default function PromptInput({
                     saveCurrentState();
                     handlePasteEvent(e);
                   }}
-                  required={true}
+                  required={!selectionPin?.text}
                   onFocus={() => setFocused(true)}
                   onBlur={(e) => {
                     setFocused(false);
@@ -405,6 +424,7 @@ export default function PromptInput({
                       formRef={formRef}
                       promptInput={promptInput}
                       isDisabled={isDisabled}
+                      canSend={!!promptInput.trim() || !!selectionPin?.text}
                     />
                   )}
                 </div>
@@ -659,17 +679,18 @@ function ChatModeButton({ workspace, disabled = false }) {
   );
 }
 
-function SendPromptButton({ formRef, promptInput, isDisabled }) {
+function SendPromptButton({ formRef, promptInput, isDisabled, canSend }) {
   const { t } = useTranslation();
+  const ready = !isDisabled && (canSend ?? !!promptInput.trim().length);
 
   return (
     <>
       <button
         ref={formRef}
         type="submit"
-        disabled={isDisabled || !promptInput.trim().length}
+        disabled={!ready}
         className={`border-none flex justify-center items-center rounded-full w-8 h-8 transition-all duration-200 ${
-          promptInput.trim().length && !isDisabled
+          ready
             ? "cursor-pointer bg-white text-zinc-900 hover:bg-white/90 light:bg-slate-900 light:text-white light:hover:bg-slate-700 shadow-sm"
             : "cursor-not-allowed bg-white/10 light:bg-slate-200 text-white/30"
         }`}

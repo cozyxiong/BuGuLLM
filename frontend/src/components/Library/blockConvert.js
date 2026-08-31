@@ -401,6 +401,11 @@ function toMd(type, items) {
       return `## ${line || "标题"}`;
     case "h3":
       return `### ${line || "标题"}`;
+    case "h4":
+      return `#### ${line || "标题"}`;
+    case "hr":
+    case "line":
+      return "---";
     case "paragraph":
       return items.map((html) => htmlToPlain(html) || "").join("\n\n") || "";
     case "ul":
@@ -552,6 +557,11 @@ function fallbackHtml(type, items) {
       return `<h2 data-block="0">${inner || "标题"}</h2>`;
     case "h3":
       return `<h3 data-block="0">${inner || "标题"}</h3>`;
+    case "h4":
+      return `<h4 data-block="0">${inner || "标题"}</h4>`;
+    case "hr":
+    case "line":
+      return `<hr data-block="0">`;
     case "ul":
       return `<ul data-block="0">${items
         .map((h) => `<li>${h || "列表"}</li>`)

@@ -4,17 +4,15 @@ import {
   TextHOne,
   TextHTwo,
   TextHThree,
+  TextHFour,
   ListNumbers,
   ListBullets,
   CheckSquare,
   BracketsCurly,
   Quotes,
-  ChatTeardropText,
   Table,
-  CaretRight,
+  Minus,
   Link,
-  Image as ImageIcon,
-  Paperclip,
   DotsSixVertical,
 } from "@phosphor-icons/react";
 import {
@@ -34,30 +32,18 @@ const TURN_ITEMS = [
   { type: "h1", label: "标题 1", Icon: TextHOne },
   { type: "h2", label: "标题 2", Icon: TextHTwo },
   { type: "h3", label: "标题 3", Icon: TextHThree },
+  { type: "h4", label: "标题 4", Icon: TextHFour },
+  { type: "hr", label: "分隔符", Icon: Minus },
+  { type: "link", label: "链接", Icon: Link },
   { type: "ol", label: "有序列表", Icon: ListNumbers },
   { type: "ul", label: "无序列表", Icon: ListBullets },
-  { type: "check", label: "待办", Icon: CheckSquare },
+  { type: "check", label: "任务列表", Icon: CheckSquare },
   { type: "code", label: "代码块", Icon: BracketsCurly },
-  { type: "quote", label: "引用", Icon: Quotes },
-  { type: "callout", label: "提示", Icon: ChatTeardropText },
   { type: "table", label: "表格", Icon: Table },
-  { type: "toggle", label: "折叠列表", Icon: CaretRight },
-  { type: "link", label: "链接", Icon: Link },
+  { type: "quote", label: "引用", Icon: Quotes },
 ];
 
-const COMMON_ITEMS = [
-  { type: "task", label: "任务", Icon: CheckSquare, color: "text-blue-400" },
-  { type: "image", label: "图片", Icon: ImageIcon, color: "text-amber-400" },
-  {
-    type: "file",
-    label: "视频或文件",
-    Icon: Paperclip,
-    color: "text-sky-400",
-  },
-  { type: "table", label: "表格", Icon: Table, color: "text-emerald-400" },
-];
-
-function placeMenu(rowRect, menuSize = { width: 280, height: 268 }) {
+function placeMenu(rowRect, menuSize = { width: 280, height: 108 }) {
   const gap = 8;
   const width = menuSize.width;
   const height = menuSize.height;
@@ -136,6 +122,10 @@ export default function BlockHandleLayer({
 
     const onMove = (e) => {
       if (dragRef.current) return;
+      if (e.buttons === 1) {
+        if (!menuRef.current) hideHandle();
+        return;
+      }
       if (menuRef.current?.contains(e.target)) return;
       if (e.target.closest?.(".vditor-toolbar, .vditor-counter, .vditor-hint")) {
         if (!menuRef.current) hideHandle();
@@ -230,6 +220,11 @@ export default function BlockHandleLayer({
   };
 
   const onDragStart = (e) => {
+    const sel = window.getSelection();
+    if (sel && !sel.isCollapsed && sel.toString().replace(/\u200b/g, "").trim()) {
+      e.preventDefault();
+      return;
+    }
     const block = blockRef.current;
     if (!block) return;
     draggedRef.current = true;
@@ -257,7 +252,14 @@ export default function BlockHandleLayer({
 
     const isIncomingMd = (event) => {
       const types = Array.from(event.dataTransfer?.types || []);
-      return types.includes(BAGU_MD_TYPE) || types.includes("text/plain");
+      if (types.includes(BAGU_MD_TYPE)) return true;
+      if (dragRef.current) return false;
+      return types.includes("text/plain");
+    };
+
+    const onContentDragStart = (e) => {
+      if (e.target.closest?.(".bagu-block-handle")) return;
+      e.preventDefault();
     };
 
     const onDragOver = (e) => {
@@ -360,12 +362,14 @@ export default function BlockHandleLayer({
       if (!pointInHost(e, host)) hideDrop();
     };
 
+    host.addEventListener("dragstart", onContentDragStart, true);
     host.addEventListener("dragover", onDragOver);
     host.addEventListener("dragleave", onDragLeave);
     host.addEventListener("drop", onDrop);
     document.addEventListener("dragover", onDocDragOver);
     document.addEventListener("dragend", hideDrop, true);
     return () => {
+      host.removeEventListener("dragstart", onContentDragStart, true);
       host.removeEventListener("dragover", onDragOver);
       host.removeEventListener("dragleave", onDragLeave);
       host.removeEventListener("drop", onDrop);
@@ -415,7 +419,7 @@ export default function BlockHandleLayer({
             style={{ left: menu.left, top: menu.top }}
             role="menu"
           >
-            <div className="grid grid-cols-6 gap-1 px-2.5 pt-2.5 pb-2">
+            <div className="grid grid-cols-6 gap-1 px-2.5 py-2">
               {TURN_ITEMS.map(({ type, label, Icon }) => (
                 <button
                   key={type}
@@ -426,22 +430,6 @@ export default function BlockHandleLayer({
                   onClick={() => applyType(type)}
                 >
                   <Icon size={18} weight="regular" />
-                </button>
-              ))}
-            </div>
-            <div className="px-2.5 pb-2 pt-1 border-t border-white/10 light:border-slate-200">
-              <p className="px-1.5 pb-1 text-[11px] text-zinc-400 light:text-slate-500">
-                常用
-              </p>
-              {COMMON_ITEMS.map(({ type, label, Icon, color }) => (
-                <button
-                  key={`${type}-${label}`}
-                  type="button"
-                  className="bagu-block-menu-row"
-                  onClick={() => applyType(type)}
-                >
-                  <Icon size={16} weight="fill" className={color} />
-                  <span>{label}</span>
                 </button>
               ))}
             </div>
