@@ -425,10 +425,37 @@ export default function LiveMarkdownEditor({
       scroller.scrollTo({ top: Math.max(0, nextTop) });
       scheduleOutlineSync();
     };
+    const syncCodeEditing = () => {
+      if (destroyed) return;
+      const sel = window.getSelection();
+      let active = null;
+      if (sel?.rangeCount) {
+        let node = sel.anchorNode;
+        if (node && node.nodeType !== 1) node = node.parentElement;
+        if (node && el.contains(node)) {
+          active = node.closest?.(
+            '.vditor-wysiwyg__block[data-type="code-block"]'
+          );
+        }
+      }
+      el.querySelectorAll(
+        '.vditor-wysiwyg__block[data-type="code-block"]'
+      ).forEach((block) => {
+        block.classList.toggle("bagu-code-editing", block === active);
+      });
+    };
+    const scheduleCodeEditing = () => {
+      syncCodeEditing();
+      window.requestAnimationFrame(syncCodeEditing);
+    };
     el.addEventListener("pointerover", onOutlineOver);
     el.addEventListener("pointerout", onOutlineOut);
     el.addEventListener("scroll", scheduleOutlineSync, true);
     el.addEventListener("click", onOutlineClick, true);
+    el.addEventListener("click", scheduleCodeEditing);
+    el.addEventListener("keyup", scheduleCodeEditing);
+    el.addEventListener("input", scheduleCodeEditing);
+    document.addEventListener("selectionchange", syncCodeEditing);
 
     return () => {
       destroyed = true;
@@ -438,6 +465,10 @@ export default function LiveMarkdownEditor({
       el.removeEventListener("pointerout", onOutlineOut);
       el.removeEventListener("scroll", scheduleOutlineSync, true);
       el.removeEventListener("click", onOutlineClick, true);
+      el.removeEventListener("click", scheduleCodeEditing);
+      el.removeEventListener("keyup", scheduleCodeEditing);
+      el.removeEventListener("input", scheduleCodeEditing);
+      document.removeEventListener("selectionchange", syncCodeEditing);
       hideOutlineTip();
       tipEl?.remove();
       tipEl = null;
@@ -562,9 +593,7 @@ export default function LiveMarkdownEditor({
 }
 
 // 兼容旧导出名（若有引用）
-export function splitMarkdownBlocks(text) {
-  return text == null || text === "" ? [""] : [String(text)];
-}
-export function joinMarkdownBlocks(blocks) {
-  return (blocks || []).join("\n\n");
-}
+export {
+  splitMarkdownBlocks,
+  joinMarkdownBlocks,
+} from "@/utils/splitMarkdownBlocks";

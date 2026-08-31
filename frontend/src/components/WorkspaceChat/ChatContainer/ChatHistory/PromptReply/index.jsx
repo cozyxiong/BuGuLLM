@@ -3,7 +3,7 @@ import { memo, useRef, useEffect, useState } from "react";
 import { Warning, CaretDown, CaretRight } from "@phosphor-icons/react";
 import renderMarkdown from "@/utils/chat/markdown";
 import DOMPurify from "@/utils/chat/purify";
-import InlineCitedContent from "../InlineSourceCitations";
+import AssistantBlocks from "../AssistantBlocks";
 import {
   THOUGHT_REGEX_CLOSE,
   THOUGHT_REGEX_COMPLETE,
@@ -174,11 +174,7 @@ function RenderAssistantChatContent({ message, messageId, sources = [] }) {
           messageId={messageId}
         />
       )}
-      <InlineCitedContent
-        content={msgToRender}
-        sources={sources}
-        className="break-words prose-chat"
-      />
+      <AssistantBlocks content={msgToRender} sources={sources} />
     </div>
   );
 }

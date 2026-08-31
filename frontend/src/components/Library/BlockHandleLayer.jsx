@@ -18,13 +18,17 @@ import {
   DotsSixVertical,
 } from "@phosphor-icons/react";
 import {
+  blockHitRect,
   convertBlock,
   focusBlock,
+  computeEditorDrop,
   getBlockAtY,
   getTopBlock,
   getWysiwygRoot,
+  insertMarkdownAt,
   moveBlock,
 } from "./blockConvert";
+import { BAGU_MD_TYPE } from "@/utils/splitMarkdownBlocks";
 
 const TURN_ITEMS = [
   { type: "h1", label: "标题 1", Icon: TextHOne },
@@ -105,11 +109,18 @@ export default function BlockHandleLayer({
       const host = getHost();
       if (!host || !block) return;
       const hostRect = host.getBoundingClientRect();
-      const rect = block.getBoundingClientRect();
+      const rect = blockHitRect(block);
+      const gutterEl =
+        block.tagName === "LI"
+          ? block.closest("[data-block='0']") ||
+            block.closest("ul, ol") ||
+            block
+          : block;
+      const gutterLeft = gutterEl.getBoundingClientRect().left;
       blockRef.current = block;
       setPos({
         top: rect.top - hostRect.top,
-        left: Math.max(0, rect.left - hostRect.left - 32),
+        left: Math.max(0, gutterLeft - hostRect.left - 32),
         height: Math.max(24, Math.min(rect.height, 32)),
         rowHeight: Math.max(24, rect.height),
         rowWidth: Math.max(rect.width + 32, hostRect.width),
@@ -244,54 +255,122 @@ export default function BlockHandleLayer({
     const wrap = containerRef.current;
     if (!wrap) return undefined;
 
+    const isIncomingMd = (event) => {
+      const types = Array.from(event.dataTransfer?.types || []);
+      return types.includes(BAGU_MD_TYPE) || types.includes("text/plain");
+    };
+
     const onDragOver = (e) => {
-      if (!dragRef.current) return;
+      const incoming = isIncomingMd(e);
+      if (!dragRef.current && !incoming) return;
       e.preventDefault();
+      e.dataTransfer.dropEffect = dragRef.current ? "move" : "copy";
       const vditor = vditorRef.current;
       const root = getWysiwygRoot(vditor);
-      const block = getTopBlock(e.target, root);
+      const block =
+        getBlockAtY(root, e.clientY) || getTopBlock(e.target, root);
       if (!block || block === dragRef.current) {
         dropRef.current = null;
         setDrop(null);
         return;
       }
       const host = wrap.parentElement || wrap;
-      const rect = block.getBoundingClientRect();
-      const wrapRect = host.getBoundingClientRect();
-      const place = e.clientY < rect.top + rect.height / 2 ? "before" : "after";
-      const next = {
-        top: (place === "before" ? rect.top : rect.bottom) - wrapRect.top,
-        left: rect.left - wrapRect.left,
-        width: rect.width,
-        place,
+      const next = computeEditorDrop(
         block,
-      };
+        e.clientX,
+        e.clientY,
+        host,
+        root
+      );
+      if (!next) {
+        dropRef.current = null;
+        setDrop(null);
+        return;
+      }
+      const prev = dropRef.current;
+      if (
+        prev &&
+        prev.block === next.block &&
+        prev.place === next.place &&
+        prev.target === next.target &&
+        prev.showHint === next.showHint &&
+        prev.level === next.level &&
+        Math.abs(prev.top - next.top) < 1 &&
+        Math.abs(prev.left - next.left) < 1
+      ) {
+        return;
+      }
       dropRef.current = next;
       setDrop(next);
     };
 
-    const onDrop = (e) => {
-      if (!dragRef.current) return;
-      e.preventDefault();
-      const vditor = vditorRef.current;
-      const hint = dropRef.current;
-      const target =
-        hint?.block || getTopBlock(e.target, getWysiwygRoot(vditor));
-      let place = hint?.place;
-      if (!place && target) {
-        const r = target.getBoundingClientRect();
-        place = e.clientY < r.top + r.height / 2 ? "before" : "after";
-      }
-      if (target && place) moveBlock(vditor, dragRef.current, target, place);
+    const hideDrop = () => {
+      if (!dropRef.current) return;
       dropRef.current = null;
       setDrop(null);
     };
 
-    wrap.addEventListener("dragover", onDragOver);
-    wrap.addEventListener("drop", onDrop);
+    const pointInHost = (e, el) => {
+      const x = e.clientX;
+      const y = e.clientY;
+      if (e.type === "dragleave" && x === 0 && y === 0) {
+        return !!(e.relatedTarget && el.contains(e.relatedTarget));
+      }
+      const r = el.getBoundingClientRect();
+      return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
+    };
+
+    const host = wrap.parentElement || wrap;
+
+    const onDrop = (e) => {
+      const incoming = isIncomingMd(e);
+      if (!dragRef.current && !incoming) return;
+      e.preventDefault();
+      const vditor = vditorRef.current;
+      const hint = dropRef.current;
+      const root = getWysiwygRoot(vditor);
+      const target =
+        hint?.target ||
+        hint?.block ||
+        getTopBlock(e.target, root) ||
+        getBlockAtY(root, e.clientY);
+      let place = hint?.insertPlace || hint?.place;
+      if (!place && target) {
+        const r = target.getBoundingClientRect();
+        place = e.clientY < r.top + r.height / 2 ? "before" : "after";
+      }
+      if (dragRef.current) {
+        if (target && place) moveBlock(vditor, dragRef.current, target, place);
+      } else {
+        const md =
+          e.dataTransfer.getData(BAGU_MD_TYPE) ||
+          e.dataTransfer.getData("text/plain");
+        if (md && md !== "block") insertMarkdownAt(vditor, target, place || "after", md);
+      }
+      hideDrop();
+    };
+
+    const onDragLeave = (e) => {
+      if (e.relatedTarget && host.contains(e.relatedTarget)) return;
+      if (!pointInHost(e, host)) hideDrop();
+    };
+
+    const onDocDragOver = (e) => {
+      if (!dropRef.current) return;
+      if (!pointInHost(e, host)) hideDrop();
+    };
+
+    host.addEventListener("dragover", onDragOver);
+    host.addEventListener("dragleave", onDragLeave);
+    host.addEventListener("drop", onDrop);
+    document.addEventListener("dragover", onDocDragOver);
+    document.addEventListener("dragend", hideDrop, true);
     return () => {
-      wrap.removeEventListener("dragover", onDragOver);
-      wrap.removeEventListener("drop", onDrop);
+      host.removeEventListener("dragover", onDragOver);
+      host.removeEventListener("dragleave", onDragLeave);
+      host.removeEventListener("drop", onDrop);
+      document.removeEventListener("dragover", onDocDragOver);
+      document.removeEventListener("dragend", hideDrop, true);
     };
   }, [containerRef, vditorRef, enabled]);
 
@@ -316,13 +395,14 @@ export default function BlockHandleLayer({
       )}
       {drop && (
         <div
-          className="bagu-block-drop"
+          className={`bagu-block-drop${drop.showHint ? " bagu-block-drop--promote" : ""}`}
           style={{
             top: drop.top - 1,
             left: drop.left,
             width: drop.width,
           }}
         >
+          <div className="bagu-block-drop-hint" />
           <div className="bagu-block-drop-dot" />
           <div className="bagu-block-drop-line" />
         </div>

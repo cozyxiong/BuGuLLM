@@ -2,7 +2,6 @@ import React, { memo, useLayoutEffect, useRef, useState } from "react";
 import { Info, Warning, CaretDown, CaretRight } from "@phosphor-icons/react";
 import Actions from "./Actions";
 import renderMarkdown from "@/utils/chat/markdown";
-import InlineCitedContent from "../InlineSourceCitations";
 import { v4 } from "uuid";
 import DOMPurify from "@/utils/chat/purify";
 import { EditMessageForm, useEditMessage } from "./Actions/EditMessage";
@@ -21,6 +20,7 @@ import { chatQueryRefusalResponse } from "@/utils/chat";
 import HistoricalOutputs from "./HistoricalOutputs";
 import HistoricalClarifyingQuestions from "./HistoricalClarifyingQuestions";
 import { openImageLightbox } from "@/components/ImageLightbox";
+import AssistantBlocks from "../AssistantBlocks";
 
 const HistoricalMessage = ({
   uuid: uuidProp,
@@ -183,7 +183,7 @@ const HistoricalMessage = ({
           </div>
         )}
         {/* 始终占位，仅悬停显现，不上下撑开排版 */}
-        <div className="flex items-center gap-x-1 w-full h-7 mt-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-150">
+        <div className="bagu-msg-actions flex items-center gap-x-1 w-full h-7 mt-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-150">
           <TTSMessage
             slug={workspace?.slug}
             chatId={chatId}
@@ -429,11 +429,7 @@ const RenderChatContent = memo(
         {thoughtChain && (
           <ThoughtChainComponent content={thoughtChain} messageId={messageId} />
         )}
-        <InlineCitedContent
-          content={msgToRender}
-          sources={sources}
-          className="flex flex-col gap-y-1 prose-chat"
-        />
+        <AssistantBlocks content={msgToRender} sources={sources} />
       </div>
     );
   },

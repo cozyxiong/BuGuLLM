@@ -80,6 +80,24 @@ markdown.renderer.rules.image = function (tokens, idx) {
 
 markdown.use(markdownItKatexPlugin);
 
+const clipboardMarkdown = markdownIt({
+  html: false,
+  typographer: true,
+  highlight: function (code, lang) {
+    const safeLang = String(lang || "")
+      .replace(/[^a-zA-Z0-9_+-]/g, "")
+      .slice(0, 32);
+    const langAttr = safeLang ? ` class="language-${safeLang}"` : "";
+    return `<pre><code${langAttr}>${HTMLEncode(code)}</code></pre>`;
+  },
+});
+
+/** Chat UI renderer (copy buttons, theme wrappers). Do not use for clipboard. */
 export default function renderMarkdown(text = "") {
   return markdown.render(text);
+}
+
+/** Semantic HTML for paste into Vditor / Word — no chat chrome. */
+export function renderMarkdownForClipboard(text = "") {
+  return clipboardMarkdown.render(text || "");
 }

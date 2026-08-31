@@ -1701,6 +1701,48 @@ dialog::backdrop {
     0 12px 32px rgba(15, 23, 42, 0.1);
 }
 
+.bagu-chat-block {
+  position: relative;
+  padding-left: 20px;
+}
+.bagu-chat-block-handle {
+  position: absolute;
+  left: 0;
+  top: 0.15em;
+  width: 18px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  padding: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--theme-text-secondary);
+  cursor: grab;
+  opacity: 0;
+}
+.bagu-chat-block:hover .bagu-chat-block-handle,
+.bagu-chat-block:focus-within .bagu-chat-block-handle {
+  opacity: 1;
+}
+.bagu-chat-block-handle:active {
+  cursor: grabbing;
+}
+.bagu-chat-block .prose-chat > *:first-child {
+  margin-top: 0;
+}
+
+.bagu-reply-drag-btn {
+  cursor: grab;
+}
+.bagu-reply-drag-btn:active {
+  cursor: grabbing;
+}
+.group.bagu-reply-dragging .bagu-msg-actions {
+  opacity: 1 !important;
+}
+
 .bagu-vditor-wrap .vditor-reset a {
   color: var(--theme-button-cta, #3b82f6) !important;
 }
@@ -1717,6 +1759,47 @@ dialog::backdrop {
   color: var(--theme-text-primary) !important;
   border: 1px solid var(--theme-modal-border);
   border-radius: 4px;
+}
+
+/**
+ * Vditor WYSIWYG 代码块是两层：源码 pre + 高亮预览。
+ * 编辑中用 .bagu-code-editing 只留源码。不要默认 display:none 源码——
+ * 每次按键 Vditor 会清掉 inline style 并替换节点，源码会被藏起来，表现为改一个字就退出。
+ */
+.bagu-vditor-wrap .vditor-wysiwyg__block[data-type="code-block"] > pre:first-child {
+  margin-bottom: 1em;
+}
+.bagu-vditor-wrap
+  .vditor-wysiwyg__block[data-type="code-block"].bagu-code-editing
+  > pre:first-child {
+  display: block !important;
+}
+.bagu-vditor-wrap
+  .vditor-wysiwyg__block[data-type="code-block"]
+  > pre:first-child[style*="display: block"]
+  + .vditor-wysiwyg__preview,
+.bagu-vditor-wrap
+  .vditor-wysiwyg__block[data-type="code-block"]
+  > pre:first-child[style*="display:block"]
+  + .vditor-wysiwyg__preview,
+.bagu-vditor-wrap
+  .vditor-wysiwyg__block[data-type="code-block"].bagu-code-editing
+  > .vditor-wysiwyg__preview {
+  display: none !important;
+}
+.bagu-vditor-wrap .vditor-reset pre > code {
+  background-image: none !important;
+}
+.bagu-vditor-wrap .vditor-wysiwyg .vditor-copy {
+  display: none !important;
+}
+.bagu-vditor-wrap .vditor-wysiwyg__block[data-type="code-block"] > pre > code {
+  display: block;
+  padding: 0.85em 1em !important;
+  border-radius: 8px !important;
+  font-size: 0.88em !important;
+  line-height: 1.65;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
 }
 
 .bagu-vditor-wrap .vditor-counter {
@@ -1770,6 +1853,19 @@ dialog::backdrop {
   align-items: center;
   height: 2px;
   pointer-events: none;
+}
+.bagu-block-drop-hint {
+  display: none;
+  flex-shrink: 0;
+  height: 2px;
+  width: 2em;
+  margin-left: -2em;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, transparent, var(--file-drop-hint));
+  opacity: 0.55;
+}
+.bagu-block-drop--promote .bagu-block-drop-hint {
+  display: block;
 }
 .bagu-block-drop-dot {
   flex-shrink: 0;

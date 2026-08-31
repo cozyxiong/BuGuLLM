@@ -1,12 +1,19 @@
 import React, { memo, useState } from "react";
 import useCopyText from "@/hooks/useCopyText";
-import { Check, ThumbsUp, ArrowsClockwise, Copy } from "@phosphor-icons/react";
+import {
+  Check,
+  ThumbsUp,
+  ArrowsClockwise,
+  Copy,
+  DotsSixVertical,
+} from "@phosphor-icons/react";
 import Workspace from "@/models/workspace";
 import { EditMessageAction } from "./EditMessage";
 import RenderMetrics from "./RenderMetrics";
 import ActionMenu from "./ActionMenu";
 import { useTranslation } from "react-i18next";
 import { ACTION_BTN_CLASS, ACTION_ICON_SIZE } from "./actionStyles";
+import { setMarkdownDragData } from "@/utils/splitMarkdownBlocks";
 
 const Actions = ({
   message,
@@ -41,8 +48,11 @@ const Actions = ({
           role === "user" ? "flex-row-reverse" : ""
         }`}
       >
+        {role !== "user" && !isEditing && (
+          <DragWholeReply message={message} />
+        )}
         <CopyMessage message={message} />
-        {/* 仅用户消息可修改；助手操作：复制 · 喜欢 · 重新生成 · 更多 */}
+        {/* 助手操作：拖到文档 · 复制 · 喜欢 · 重新生成 · 更多；仅用户消息可修改 */}
         {role === "user" && (
           <EditMessageAction
             chatId={chatId}
@@ -92,6 +102,32 @@ function FeedbackButton({ isSelected, handleFeedback, tooltipContent, IconCompon
         size={ACTION_ICON_SIZE}
         weight={isSelected ? "fill" : "regular"}
       />
+    </button>
+  );
+}
+
+function DragWholeReply({ message }) {
+  if (!message) return null;
+  return (
+    <button
+      type="button"
+      draggable
+      aria-label="拖动"
+      data-tooltip-id="drag-assistant-text"
+      data-tooltip-content="拖动"
+      className={`${ACTION_BTN_CLASS} bagu-reply-drag-btn`}
+      onClick={(event) => event.preventDefault()}
+      onDragStart={(event) => {
+        event.currentTarget.closest(".group")?.classList.add("bagu-reply-dragging");
+        setMarkdownDragData(event, message);
+      }}
+      onDragEnd={(event) => {
+        event.currentTarget
+          .closest(".group")
+          ?.classList.remove("bagu-reply-dragging");
+      }}
+    >
+      <DotsSixVertical size={ACTION_ICON_SIZE} weight="bold" />
     </button>
   );
 }
